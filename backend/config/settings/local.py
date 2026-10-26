@@ -26,6 +26,7 @@ os.environ.setdefault(
 
 from config.settings.base import *  # noqa: E402,F403
 
+# Dev mail is printed. SMTP settings in the environment are for production.
 MAILERS = {
     "default": {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse
@@ -18,9 +20,18 @@ from rest_framework.exceptions import (
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from accounts.models import User
+from accounts.passwords import (
+    INVALID_LINK,
+    PASSWORD_UPDATED,
+    RESET_SENT,
+    invalidate_user_sessions,
+    try_send_password_reset,
+    user_from_uid,
+)
 from organizations.serializers import session_payload
 
 
@@ -157,3 +168,89 @@ class LogoutView(APIView):
 class SessionView(APIView):
     def get(self, request: Request) -> Response:
         return Response(session_payload(_active_user(request)))
+
+
+class PasswordResetRequestSerializer(serializers.Serializer[dict[str, str]]):
+    email = serializers.EmailField()
+
+    def validate_email(self, value: str) -> str:
+        try:
+            return User.objects.normalize_user_email(value)
+        except ValueError as exc:
+            raise serializers.ValidationError("Enter a valid email address.") from exc
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer[dict[str, str]]):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    password = serializers.CharField(trim_whitespace=False, max_length=256)
+
+
+class PasswordChangeSerializer(serializers.Serializer[dict[str, str]]):
+    current_password = serializers.CharField(trim_whitespace=False, max_length=256)
+    password = serializers.CharField(trim_whitespace=False, max_length=256)
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_reset"
+
+    def post(self, request: Request) -> Response:
+        enforce_browser_csrf(request)
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.filter(
+            email=serializer.validated_data["email"],
+            is_active=True,
+        ).first()
+        if user is not None:
+            try_send_password_reset(user)
+        return Response({"detail": RESET_SENT})
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_reset_confirm"
+
+    def post(self, request: Request) -> Response:
+        enforce_browser_csrf(request)
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = user_from_uid(serializer.validated_data["uid"])
+        token = serializer.validated_data["token"]
+        if user is None or not default_token_generator.check_token(user, token):
+            raise ValidationError({"non_field_errors": [INVALID_LINK]})
+        password = serializer.validated_data["password"]
+        try:
+            validate_password(password, user)
+        except DjangoValidationError as exc:
+            raise ValidationError({"password": list(exc.messages)}) from exc
+        user.set_password(password)
+        user.save(update_fields=["password"])
+        invalidate_user_sessions(user)
+        return Response({"detail": PASSWORD_UPDATED})
+
+
+class PasswordChangeView(APIView):
+    def post(self, request: Request) -> Response:
+        user = _active_user(request)
+        serializer = PasswordChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if not user.check_password(serializer.validated_data["current_password"]):
+            raise ValidationError(
+                {"current_password": ["The current password is incorrect."]}
+            )
+        password = serializer.validated_data["password"]
+        try:
+            validate_password(password, user)
+        except DjangoValidationError as exc:
+            raise ValidationError({"password": list(exc.messages)}) from exc
+        user.set_password(password)
+        user.save(update_fields=["password"])
+        current = request.session.session_key
+        keep = current if isinstance(current, str) else None
+        invalidate_user_sessions(user, keep=keep)
+        update_session_auth_hash(request, user)
+        return Response({"detail": "Your password has been changed."})

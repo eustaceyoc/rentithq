@@ -142,6 +142,17 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
+DEFAULT_FROM_EMAIL = (
+    os.environ.get("DEFAULT_FROM_EMAIL", "Rent It HQ <noreply@rentithq.local>").strip()
+    or "Rent It HQ <noreply@rentithq.local>"
+)
+FRONTEND_BASE_URL = (
+    os.environ.get("FRONTEND_BASE_URL", "http://127.0.0.1:43123").strip().rstrip("/")
+    or "http://127.0.0.1:43123"
+)
+# PasswordResetTokenGenerator treats a token as expired after this many seconds.
+PASSWORD_RESET_TIMEOUT = 60 * 60
+
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "common.api.renderers.DecimalJSONRenderer",
@@ -158,6 +169,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "common.api.pagination.StandardPagination",
     "PAGE_SIZE": 25,
     "EXCEPTION_HANDLER": "common.api.errors.api_exception_handler",
+    "DEFAULT_THROTTLE_RATES": {
+        "password_reset": "5/hour",
+        "password_reset_confirm": "10/hour",
+    },
 }
 
 LOG_LEVEL = read_log_level(os.environ)

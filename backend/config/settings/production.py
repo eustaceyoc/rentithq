@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 
 from config.environment import (
+    read_bool,
     read_non_negative_int,
     split_csv,
     validate_production_environment,
@@ -29,9 +30,6 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
 CSRF_TRUSTED_ORIGINS = split_csv(os.environ.get("CSRF_TRUSTED_ORIGINS", ""))
 
-# Outbound email is not a Phase 00 feature. SMTP is declared so deploy checks
-# do not treat the process as a development mailer. Nothing sends mail until
-# EMAIL_HOST is set and a later phase adds a notification flow.
 MAILERS = {
     "default": {
         "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
@@ -40,7 +38,7 @@ MAILERS = {
             "port": read_non_negative_int(os.environ, "EMAIL_PORT", default=587),
             "username": os.environ.get("EMAIL_HOST_USER", "").strip(),
             "password": os.environ.get("EMAIL_HOST_PASSWORD", ""),
-            "use_tls": True,
+            "use_tls": read_bool(os.environ, "EMAIL_USE_TLS", default=True),
         },
     },
 }
