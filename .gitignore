@@ -1,0 +1,44 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Django
+backend/media/
+backend/staticfiles/
+*.sqlite3
+db.sqlite3
+
+# Node
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.tsbuildinfo
+frontend/node_modules/.tmp/
+
+# Logs and OS files
+*.log
+.DS_Store
+
+# Local uploads and editor state
+uploads/
+agent-tools/
+.idea/
+.vscode/
+
+# private planning files, kept local only
+product-prompts/
+DECISIONS.md
+IMPLEMENTATION_STATUS.md
