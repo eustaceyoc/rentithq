@@ -1,0 +1,38 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings/*.py" = ["E402", "F403", "F405"]
+"**/migrations/*.py" = ["E501", "I001"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+strict = true
+warn_unused_ignores = true
+exclude = ["(?x)(^|/)migrations/"]
+files = [
+  "config",
+  "accounts",
+  "common",
+  "organizations",
+  "properties",
+  "residents",
+  "bookings",
+  "tenancies",
+  "billing",
+  "tests",
+]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
