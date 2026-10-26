@@ -1,13 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { resetApiState, type WorkspaceSummary } from './api/session'
+import { LoginPage } from './pages/LoginPage'
 import { WorkspaceHome } from './WorkspaceHome'
 
 function renderHome() {
   return render(
-    <MemoryRouter>
-      <WorkspaceHome />
+    <MemoryRouter initialEntries={['/app']}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/app/*" element={<WorkspaceHome />} />
+      </Routes>
     </MemoryRouter>,
   )
 }
@@ -128,6 +132,7 @@ describe('Workspace home', () => {
 
   it('signs in without writing the password to local storage', async () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem')
+    let signedIn = false
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -139,6 +144,10 @@ describe('Workspace home', () => {
         if (url.includes('/auth/login/') && method === 'POST') {
           const body = JSON.parse(String(init?.body)) as { password?: string }
           expect(body.password).toBe('correct-horse-battery')
+          signedIn = true
+          return sessionResponse([])
+        }
+        if (url.includes('/auth/session/') && signedIn) {
           return sessionResponse([])
         }
         return jsonResponse(

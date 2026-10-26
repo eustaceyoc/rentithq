@@ -287,6 +287,56 @@ export async function signIn(input: {
   return session
 }
 
+async function readDetail(response: Response): Promise<string> {
+  if (!response.ok) {
+    throw await errorFromResponse(response)
+  }
+  let body: unknown
+  try {
+    body = await response.json()
+  } catch (error: unknown) {
+    if (isAbort(error)) {
+      throw error
+    }
+    throw new ApiError('The API returned an unexpected response.')
+  }
+  if (!isRecord(body) || typeof body.detail !== 'string') {
+    throw new ApiError('The API returned an unexpected response.')
+  }
+  return body.detail
+}
+
+export async function requestPasswordReset(email: string): Promise<string> {
+  const response = await request('/api/v1/auth/password/reset/', {
+    method: 'POST',
+    body: { email },
+  })
+  return readDetail(response)
+}
+
+export async function confirmPasswordReset(input: {
+  uid: string
+  token: string
+  password: string
+}): Promise<string> {
+  const response = await request('/api/v1/auth/password/reset/confirm/', {
+    method: 'POST',
+    body: input,
+  })
+  return readDetail(response)
+}
+
+export async function changePassword(input: {
+  current_password: string
+  password: string
+}): Promise<string> {
+  const response = await request('/api/v1/auth/password/change/', {
+    method: 'POST',
+    body: input,
+  })
+  return readDetail(response)
+}
+
 export async function signOut(): Promise<void> {
   const response = await request('/api/v1/auth/logout/', { method: 'POST' })
   csrfToken = null

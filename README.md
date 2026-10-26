@@ -11,6 +11,8 @@ Rent It HQ is a property management app I'm building for hostel owners, apartmen
 - Maintenance requests with priorities, assignment and a status history
 - Reports for occupancy, arrears, collections and maintenance, with CSV export
 - A dashboard with the key numbers at a glance
+- Password reset by email, and changing your password from Settings
+- A public landing page, with sign-in at `/login` and the app at `/app`
 
 ## Coming next
 

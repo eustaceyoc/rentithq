@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { resetApiState } from './api/session'
+import { ServiceStatus } from './ServiceStatus'
 
 afterEach(() => {
   resetApiState()
@@ -49,10 +50,11 @@ function installFetch(
 describe('API connection screen', () => {
   it('starts by checking the API', () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)))
-    render(<App />)
+    render(<ServiceStatus />)
     expect(screen.getByText('Checking the API…')).toBeInTheDocument()
+    render(<App />)
     expect(
-      screen.getByRole('heading', { name: 'Rent It HQ' }),
+      screen.getByRole('heading', { name: 'Rooms, rent, and repairs in one place.' }),
     ).toBeInTheDocument()
   })
 
@@ -60,7 +62,7 @@ describe('API connection screen', () => {
     installFetch(() =>
       jsonResponse({ status: 'ok', service: 'rentithq-api' }),
     )
-    render(<App />)
+    render(<ServiceStatus />)
     expect(await screen.findByText('The API is reachable.')).toBeInTheDocument()
     expect(screen.getByText(/rentithq-api/)).toBeInTheDocument()
   })
@@ -69,7 +71,7 @@ describe('API connection screen', () => {
     installFetch(() =>
       jsonResponse({ status: 'degraded', service: 'rentithq-api' }),
     )
-    render(<App />)
+    render(<ServiceStatus />)
     expect(
       await screen.findByText(
         'The API responded, but it is not reporting a healthy status.',
@@ -79,13 +81,13 @@ describe('API connection screen', () => {
 
   it('shows a failure when the API cannot be reached', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')))
-    render(<App />)
+    render(<ServiceStatus />)
     expect(await screen.findByText('The API could not be reached.')).toBeInTheDocument()
   })
 
   it('does not show an unexpected payload as a success', async () => {
     installFetch(() => jsonResponse({ status: 1, detail: 'secret-trace' }))
-    render(<App />)
+    render(<ServiceStatus />)
     expect(await screen.findByText('The API could not be reached.')).toBeInTheDocument()
     expect(screen.queryByText(/secret-trace/)).not.toBeInTheDocument()
   })

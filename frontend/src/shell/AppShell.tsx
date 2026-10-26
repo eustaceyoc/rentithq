@@ -24,31 +24,31 @@ type NavItem = {
 function navFor(role: string): NavItem[] {
   const resident = role === 'resident'
   const items: NavItem[] = [
-    { to: '/', label: 'Dashboard', icon: <DashboardOutlined /> },
+    { to: '/app', label: 'Dashboard', icon: <DashboardOutlined /> },
   ]
   if (!resident) {
-    items.push({ to: '/properties', label: 'Properties', icon: <HomeOutlined /> })
+    items.push({ to: '/app/properties', label: 'Properties', icon: <HomeOutlined /> })
   }
   items.push({
-    to: '/residents',
+    to: '/app/residents',
     label: resident ? 'Your stay' : 'Residents',
     icon: <TeamOutlined />,
   })
   if (!resident) {
     items.push({
-      to: '/bookings',
+      to: '/app/bookings',
       label: 'Bookings',
       icon: <CalendarOutlined />,
     })
   }
   items.push(
-    { to: '/billing', label: 'Billing', icon: <DollarOutlined /> },
-    { to: '/maintenance', label: 'Maintenance', icon: <ToolOutlined /> },
+    { to: '/app/billing', label: 'Billing', icon: <DollarOutlined /> },
+    { to: '/app/maintenance', label: 'Maintenance', icon: <ToolOutlined /> },
   )
   if (!resident) {
-    items.push({ to: '/reports', label: 'Reports', icon: <BarChartOutlined /> })
+    items.push({ to: '/app/reports', label: 'Reports', icon: <BarChartOutlined /> })
   }
-  items.push({ to: '/settings', label: 'Settings', icon: <SettingOutlined /> })
+  items.push({ to: '/app/settings', label: 'Settings', icon: <SettingOutlined /> })
   return items
 }
 
@@ -77,7 +77,7 @@ export function AppShell({
   const items = navFor(role)
   const selected = items.some((item) => item.to === location.pathname)
     ? location.pathname
-    : '/'
+    : '/app'
 
   const menu = (
     <Menu
