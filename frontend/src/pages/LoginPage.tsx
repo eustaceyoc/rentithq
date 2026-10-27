@@ -81,8 +81,8 @@ export function LoginPage() {
 
   return (
     <ConfigProvider theme={theme}>
-      <main>
-        <Card style={{ maxWidth: 480, margin: '48px auto', width: 'calc(100% - 32px)' }}>
+      <main className="auth-frame">
+        <Card>
           <Typography.Title level={1} style={{ marginTop: 0, fontSize: '1.7rem' }}>
             Rent It HQ
           </Typography.Title>

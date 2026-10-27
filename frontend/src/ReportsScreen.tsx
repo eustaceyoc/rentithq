@@ -1,4 +1,4 @@
-import { Alert, Button, Typography } from 'antd'
+import { Alert, Button, Table, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import {
   downloadReport,
@@ -13,6 +13,7 @@ import {
 } from './api/reports'
 import { errorText } from './api/session'
 import { formatMoney } from './money'
+import { PageHeader } from './ui/PageHeader'
 
 function today(): string {
   const now = new Date()
@@ -86,12 +87,10 @@ export function ReportsScreen({
   if (!staff) {
     return (
       <section id="reports">
-        <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-          Reports
-        </Typography.Title>
-        <Typography.Paragraph>
-          Reports stay with the staff who run this workspace. Your invoices are in billing.
-        </Typography.Paragraph>
+        <PageHeader
+          title="Reports"
+          description="Reports stay with the staff who run this workspace. Your invoices are in billing."
+        />
       </section>
     )
   }
@@ -107,44 +106,38 @@ export function ReportsScreen({
 
   return (
     <section id="reports">
-      <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-        Reports
-      </Typography.Title>
-      <Typography.Paragraph>
-        Totals are for this workspace only. Amounts use the currency&apos;s normal decimal places.
-        Stored amounts keep four decimal places.
-      </Typography.Paragraph>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <label>
+      <PageHeader
+        title="Reports"
+        description="Totals are for this workspace only. Amounts use the currency's normal decimal places. Stored amounts keep four decimal places."
+      />
+      <div className="filter-bar">
+        <label className="filter-field">
           On
           <input
             id="report-on"
             type="date"
             value={on}
             onChange={(event) => setOn(event.target.value)}
-            style={{ display: 'block' }}
           />
         </label>
         {showMoney ? (
           <>
-            <label>
+            <label className="filter-field">
               Collections from
               <input
                 id="report-from"
                 type="date"
                 value={from}
                 onChange={(event) => setFrom(event.target.value)}
-                style={{ display: 'block' }}
               />
             </label>
-            <label>
+            <label className="filter-field">
               Collections to
               <input
                 id="report-to"
                 type="date"
                 value={to}
                 onChange={(event) => setTo(event.target.value)}
-                style={{ display: 'block' }}
               />
             </label>
           </>
@@ -181,26 +174,44 @@ export function ReportsScreen({
           {occupancy.properties.length === 0 ? (
             <Typography.Paragraph>No properties are recorded.</Typography.Paragraph>
           ) : (
-            <ul style={{ paddingInlineStart: 18 }}>
-              {occupancy.properties.map((property) => (
-                <li key={property.property_id}>
-                  {property.property_name}: occupied {property.occupied}, free {property.free},
-                  unavailable {property.unavailable}.
-                </li>
-              ))}
-            </ul>
+            <Table
+              className="data-table"
+              size="middle"
+              pagination={false}
+              rowKey="property_id"
+              dataSource={occupancy.properties}
+              scroll={{ x: 'max-content' }}
+              style={{ marginBottom: 16 }}
+              columns={[
+                {
+                  title: 'Property',
+                  render: (_value, property) =>
+                    `${property.property_name}: occupied ${property.occupied}`,
+                },
+                { title: 'Free', dataIndex: 'free' },
+                { title: 'Unavailable', dataIndex: 'unavailable' },
+              ]}
+            />
           )}
           <Typography.Paragraph>
             Upcoming move-outs in {occupancy.within_days} days: {occupancy.upcoming_count}.
             {occupancy.upcoming_truncated ? ' The list shows the first 100.' : ''}
           </Typography.Paragraph>
-          <ul style={{ paddingInlineStart: 18 }}>
-            {occupancy.upcoming_move_outs.map((row) => (
-              <li key={`${row.kind}-${row.resident_name}-${row.end_date}`}>
-                {row.resident_name} · {row.label} · {row.end_date}
-              </li>
-            ))}
-          </ul>
+          <Table
+            className="data-table"
+            size="middle"
+            pagination={false}
+            rowKey={(row) => `${row.kind}-${row.resident_name}-${row.end_date}`}
+            dataSource={occupancy.upcoming_move_outs}
+            scroll={{ x: 'max-content' }}
+            style={{ marginBottom: 16 }}
+            locale={{ emptyText: 'No upcoming move-outs in this window.' }}
+            columns={[
+              { title: 'Resident', dataIndex: 'resident_name' },
+              { title: 'Place', dataIndex: 'label' },
+              { title: 'Last day', dataIndex: 'end_date' },
+            ]}
+          />
           <Button
             className="no-print"
             onClick={() => {
@@ -226,14 +237,22 @@ export function ReportsScreen({
           {arrears.residents.length === 0 ? (
             <Typography.Paragraph>No one is in arrears on this date.</Typography.Paragraph>
           ) : (
-            <ul style={{ paddingInlineStart: 18 }}>
-              {arrears.residents.map((row) => (
-                <li key={row.resident_id}>
-                  {row.resident_name}: {row.invoice_count} invoices,{' '}
-                  {formatMoney(row.outstanding_amount, arrears.currency_code)}.
-                </li>
-              ))}
-            </ul>
+            <Table
+              className="data-table"
+              size="middle"
+              pagination={false}
+              rowKey="resident_id"
+              dataSource={arrears.residents}
+              scroll={{ x: 'max-content' }}
+              style={{ marginBottom: 16 }}
+              columns={[
+                {
+                  title: 'Resident',
+                  render: (_value, row) =>
+                    `${row.resident_name}: ${row.invoice_count} invoices, ${formatMoney(row.outstanding_amount, arrears.currency_code)}.`,
+                },
+              ]}
+            />
           )}
           <Button
             className="no-print"

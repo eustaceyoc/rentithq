@@ -12,6 +12,7 @@ import {
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { notifyCatalogChanged } from './catalog'
+import { PageHeader } from './ui/PageHeader'
 import {
   createBed,
   createBuilding,
@@ -274,7 +275,7 @@ function PropertyDetail({
       <Button onClick={onBack} style={{ marginBottom: 12 }}>
         All properties
       </Button>
-      <Typography.Title level={3} style={{ marginTop: 0, fontSize: '1.2rem' }}>
+      <Typography.Title level={2} style={{ marginTop: 0, fontSize: 20, fontWeight: 600 }}>
         {property.name}
       </Typography.Title>
       <Typography.Paragraph>
@@ -804,9 +805,7 @@ export function PropertiesScreen({
   if (!canView) {
     return (
       <section style={{ marginBottom: 24, maxWidth: '100%' }}>
-        <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-          Properties
-        </Typography.Title>
+        <PageHeader title="Properties" />
         <Alert
           type="info"
           showIcon
@@ -842,19 +841,26 @@ export function PropertiesScreen({
 
   return (
     <section style={{ marginBottom: 24, maxWidth: '100%', overflowWrap: 'anywhere' }}>
-      <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-        Properties
-      </Typography.Title>
-      {canManage ? (
-        <Typography.Paragraph>
-          Record each property, then add rooms or whole units. Beds belong only
-          to rooms.
-        </Typography.Paragraph>
-      ) : (
-        <Typography.Paragraph>
-          You can view properties. Owners and property managers make changes.
-        </Typography.Paragraph>
-      )}
+      <PageHeader
+        title="Properties"
+        description={
+          canManage
+            ? 'Record each property, then add rooms or whole units. Beds belong only to rooms.'
+            : 'You can view properties. Owners and property managers make changes.'
+        }
+        actions={
+          canManage && !open ? (
+            <Button
+              type="primary"
+              onClick={() => {
+                setCreating(true)
+              }}
+            >
+              New property
+            </Button>
+          ) : null
+        }
+      />
       {actionMessage ? (
         <Alert
           type="error"
@@ -909,9 +915,11 @@ export function PropertiesScreen({
       ) : null}
       {properties && !open && properties.length > 0 ? (
         <Table
+          className="data-table"
           rowKey="id"
           pagination={false}
           dataSource={properties}
+          scroll={{ x: 'max-content' }}
           style={{ marginBottom: 16 }}
           columns={[
             { title: 'Property', dataIndex: 'name' },
@@ -939,14 +947,6 @@ export function PropertiesScreen({
       ) : null}
       {canManage && !open ? (
         <>
-          <Button
-            type="primary"
-            onClick={() => {
-              setCreating(true)
-            }}
-          >
-            New property
-          </Button>
           <Modal
             title="Add a property"
             open={creating}

@@ -8,6 +8,7 @@ import {
   ToolOutlined,
   CalendarOutlined,
   BarChartOutlined,
+  DownOutlined,
 } from '@ant-design/icons'
 import { Button, Drawer, Dropdown, Grid, Layout, Menu, Typography } from 'antd'
 import { useState, type ReactNode } from 'react'
@@ -120,14 +121,19 @@ export function AppShell({
           theme="dark"
           style={{ position: 'sticky', top: 0, height: '100vh' }}
         >
-          <div style={{ padding: collapsed ? '20px 8px' : '20px 16px 12px' }}>
-            <Typography.Title level={4} style={{ color: '#fff', margin: 0, fontSize: collapsed ? 0 : '1.05rem' }}>
-              {collapsed ? '' : 'Rent It HQ'}
-            </Typography.Title>
+          <div className="sider-brand" style={{ paddingInline: collapsed ? 8 : 16, justifyContent: collapsed ? 'center' : 'flex-start' }}>
+            <span className="brand-mark" aria-hidden="true">
+              R
+            </span>
             {collapsed ? null : (
-              <Typography.Text style={{ color: '#9fb8b4', fontSize: 12 }}>
-                {workspaceName}
-              </Typography.Text>
+              <div style={{ minWidth: 0 }}>
+                <Typography.Text style={{ color: '#fff', display: 'block', fontWeight: 700, lineHeight: 1.2 }}>
+                  Rent It HQ
+                </Typography.Text>
+                <Typography.Text style={{ color: '#9fb8b4', fontSize: 12 }} ellipsis>
+                  {workspaceName}
+                </Typography.Text>
+              </div>
             )}
           </div>
           {menu}
@@ -182,10 +188,19 @@ export function AppShell({
               ],
             }}
           >
-            <Button type="text">{email}</Button>
+            <Button
+              type="text"
+              className="account-menu"
+              aria-haspopup="menu"
+              aria-label={`Account menu for ${email}`}
+              icon={<DownOutlined />}
+              iconPlacement="end"
+            >
+              <span>{email}</span>
+            </Button>
           </Dropdown>
         </Header>
-        <Content style={{ padding: isMobile ? 16 : 28 }}>{children}</Content>
+        <Content style={{ padding: isMobile ? 16 : 32 }}>{children}</Content>
       </Layout>
     </Layout>
   )

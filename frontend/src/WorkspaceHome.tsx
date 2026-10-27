@@ -30,9 +30,9 @@ import {
 } from './api/session'
 import { ChangePasswordForm } from './pages/PasswordPages'
 import { WorkspaceRoutes } from './pages/WorkspaceRoutes'
-import { ServiceStatus } from './ServiceStatus'
 import { AppShell } from './shell/AppShell'
 import { theme } from './theme'
+import { PageHeader } from './ui/PageHeader'
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Owner',
@@ -250,15 +250,20 @@ function WorkspacePanel({
 
   const [inviteOpen, setInviteOpen] = useState(false)
   const settings = (
-    <Card>
-      <Typography.Title level={2} style={{ marginTop: 0 }}>
-        Settings
-      </Typography.Title>
-      <ChangePasswordForm />
-      <Typography.Paragraph>
-        Currency {workspace.currency_code}. Timezone {workspace.timezone}.
-        {workspace.plan_code ? ` Account plan ${workspace.plan_code}.` : ''}
-      </Typography.Paragraph>
+    <>
+      <PageHeader
+        title="Settings"
+        description={
+          <>
+            Currency {workspace.currency_code}. Timezone {workspace.timezone}.
+            {workspace.plan_code ? ` Account plan ${workspace.plan_code}.` : ''}
+          </>
+        }
+      />
+      <div className="form-panel" style={{ marginTop: 0, marginBottom: 24 }}>
+        <ChangePasswordForm />
+      </div>
+      <Card title="People">
           {membership.role === 'resident' ? (
             <Typography.Paragraph>
               You can see your own membership. Workspace settings stay with the owner.
@@ -285,9 +290,11 @@ function WorkspacePanel({
           ) : null}
           {members && members.length > 0 ? (
             <Table
+              className="data-table"
               rowKey="id"
               pagination={false}
               dataSource={members}
+              scroll={{ x: 'max-content' }}
               columns={[
                 {
                   title: 'Email',
@@ -379,6 +386,7 @@ function WorkspacePanel({
             </>
           ) : null}
     </Card>
+    </>
   )
 
   return (
@@ -535,19 +543,13 @@ export function WorkspaceHome() {
   }
 
   if (selected) {
-    return (
-      <ConfigProvider theme={theme}>
-        {body}
-        <div className="no-print" style={{ padding: '8px 24px 24px' }}>
-          <ServiceStatus />
-        </div>
-      </ConfigProvider>
-    )
+    return <ConfigProvider theme={theme}>{body}</ConfigProvider>
   }
 
   return (
     <ConfigProvider theme={theme}>
-    <Card style={{ maxWidth: 480, margin: '48px auto', width: 'calc(100% - 32px)' }}>
+    <main className="auth-frame">
+    <Card>
       <Typography.Title level={1} style={{ marginTop: 0, fontSize: '1.7rem' }}>
         Rent It HQ
       </Typography.Title>
@@ -569,6 +571,7 @@ export function WorkspaceHome() {
         {body}
       </div>
     </Card>
+    </main>
     </ConfigProvider>
   )
 }

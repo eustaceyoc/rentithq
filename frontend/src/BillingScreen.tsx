@@ -1,4 +1,4 @@
-import { Alert, Button, Checkbox, Form, Input, Select, Typography } from 'antd'
+import { Alert, Button, Checkbox, Empty, Form, Input, Select, Table, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import {
   allocatePayment,
@@ -18,6 +18,8 @@ import { listResidents, listTenancies, type ResidentRecord, type TenancyRecord }
 import { errorText } from './api/session'
 import { useCatalogRevision } from './catalog'
 import { formatMoney } from './money'
+import { PageHeader } from './ui/PageHeader'
+import { StatusTag } from './ui/StatusTag'
 
 const SECTIONS = [
   { id: 'invoices', label: 'Invoices' },
@@ -174,12 +176,20 @@ function useBillingLists(workspaceId: string, loadDirectories: boolean, enabled:
   }
 }
 
-function ReceiptBody({ payment }: { payment: PaymentRecord }) {
+function ReceiptBody({
+  payment,
+  showTitle = true,
+}: {
+  payment: PaymentRecord
+  showTitle?: boolean
+}) {
   return (
     <div>
-      <Typography.Title level={4} style={{ fontSize: '1.05rem' }}>
-        Receipt {payment.reference}
-      </Typography.Title>
+      {showTitle ? (
+        <Typography.Title level={4} style={{ fontSize: '1.05rem' }}>
+          Receipt {payment.reference}
+        </Typography.Title>
+      ) : null}
       <Typography.Paragraph>
         {payment.resident_name}. Paid {payment.paid_on}. {methodLabel(payment.method)}.
         Amount {money(payment.amount, payment.currency_code)}. Status {payment.status}.
@@ -279,63 +289,99 @@ function InvoiceList({
 
   if (invoices.length === 0) {
     return (
-      <Typography.Paragraph>
-        No invoices yet. Issue one when a resident owes a charge.
-      </Typography.Paragraph>
+      <Empty description="No invoices yet. Issue one when a resident owes a charge." />
     )
   }
+  const printing = invoices.find((invoice) => invoice.id === printId)
   return (
     <>
-      {invoices.map((invoice) => (
-        <article
-          key={invoice.id}
-          className={printId === invoice.id ? 'billing-print' : undefined}
-          style={{ marginBottom: 16 }}
-        >
+      <Table
+        className="data-table"
+        rowKey="id"
+        pagination={false}
+        dataSource={invoices}
+        scroll={{ x: 'max-content' }}
+        expandable={{
+          expandedRowRender: (invoice) => (
+            <div>
+              {invoice.lines.map((line, index) => (
+                <Typography.Paragraph key={`${invoice.id}-${index}`}>
+                  {line.description}: {line.quantity} × {money(line.unit_amount, invoice.currency_code)}{' '}
+                  = {money(line.line_total, invoice.currency_code)}
+                </Typography.Paragraph>
+              ))}
+              {invoice.void_reason ? (
+                <Typography.Paragraph>Void reason: {invoice.void_reason}.</Typography.Paragraph>
+              ) : null}
+              {write && invoice.status === 'issued' ? (
+                <ReasonForm
+                  submitLabel={`Void ${invoice.reference}`}
+                  reasonLabel={`Void reason for ${invoice.reference}`}
+                  dateLabel={`Void date for ${invoice.reference}`}
+                  onSubmit={async (values) => {
+                    try {
+                      await voidInvoice(workspaceId, invoice.id, {
+                        reason: values.reason.trim(),
+                        voided_on: values.on,
+                      })
+                      onChanged()
+                    } catch (error: unknown) {
+                      onError(errorText(error))
+                    }
+                  }}
+                />
+              ) : null}
+            </div>
+          ),
+        }}
+        columns={[
+          {
+            title: 'Invoice',
+            render: (_value, invoice) => `${invoice.reference} · ${invoice.resident_name}`,
+          },
+          {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (status: string) => <StatusTag value={status} />,
+          },
+          { title: 'Issued', dataIndex: 'issued_on' },
+          { title: 'Due', dataIndex: 'due_on' },
+          {
+            title: 'Outstanding',
+            render: (_value, invoice) => money(invoice.outstanding_amount, invoice.currency_code),
+          },
+          {
+            title: '',
+            render: (_value, invoice) => (
+              <Button
+                className="no-print"
+                onClick={() => {
+                  setPrintId(invoice.id)
+                  setPrintToken((token) => token + 1)
+                }}
+              >
+                Print invoice {invoice.reference}
+              </Button>
+            ),
+          },
+        ]}
+      />
+      {printing ? (
+        <article className="billing-print">
           <Typography.Paragraph>
-            {invoice.reference} · {invoice.resident_name} · {invoice.status}. Issued{' '}
-            {invoice.issued_on}, due {invoice.due_on}. Total{' '}
-            {money(invoice.total_amount, invoice.currency_code)}. Outstanding{' '}
-            {money(invoice.outstanding_amount, invoice.currency_code)}.
+            Invoice {printing.reference}. Resident {printing.resident_name}. Status {printing.status}.
+            Issued {printing.issued_on}, due {printing.due_on}. Total{' '}
+            {money(printing.total_amount, printing.currency_code)}. Outstanding{' '}
+            {money(printing.outstanding_amount, printing.currency_code)}.
           </Typography.Paragraph>
-          {invoice.lines.map((line, index) => (
-            <Typography.Paragraph key={`${invoice.id}-${index}`}>
-              {line.description}: {line.quantity} × {money(line.unit_amount, invoice.currency_code)}{' '}
-              = {money(line.line_total, invoice.currency_code)}
+          {printing.lines.map((line, index) => (
+            <Typography.Paragraph key={`${printing.id}-print-${index}`}>
+              {line.description}: {line.quantity} × {money(line.unit_amount, printing.currency_code)} ={' '}
+              {money(line.line_total, printing.currency_code)}
             </Typography.Paragraph>
           ))}
-          {invoice.void_reason ? (
-            <Typography.Paragraph>Void reason: {invoice.void_reason}.</Typography.Paragraph>
-          ) : null}
-          <Button
-            className="no-print"
-            onClick={() => {
-              setPrintId(invoice.id)
-              setPrintToken((token) => token + 1)
-            }}
-          >
-            Print invoice {invoice.reference}
-          </Button>
-          {write && invoice.status === 'issued' ? (
-            <ReasonForm
-              submitLabel={`Void ${invoice.reference}`}
-              reasonLabel={`Void reason for ${invoice.reference}`}
-              dateLabel={`Void date for ${invoice.reference}`}
-              onSubmit={async (values) => {
-                try {
-                  await voidInvoice(workspaceId, invoice.id, {
-                    reason: values.reason.trim(),
-                    voided_on: values.on,
-                  })
-                  onChanged()
-                } catch (error: unknown) {
-                  onError(errorText(error))
-                }
-              }}
-            />
-          ) : null}
         </article>
-      ))}
+      ) : null}
     </>
   )
 }
@@ -363,6 +409,7 @@ function IssueInvoiceForm({
   return (
     <Form<InvoiceValues>
       form={form}
+      className="form-panel"
       layout="vertical"
       requiredMark={false}
       initialValues={{ lines: [{ description: '', quantity: '1', unit_amount: '' }] }}
@@ -404,6 +451,7 @@ function IssueInvoiceForm({
         }
       }}
     >
+      <p className="form-panel-title">Issue an invoice</p>
       <Form.Item
         label="Resident"
         name="resident_id"
@@ -530,29 +578,30 @@ function PaymentCards({
   onError: (message: string) => void
 }) {
   if (payments.length === 0) {
-    return <Typography.Paragraph>No payments yet.</Typography.Paragraph>
+    return <Empty description="No payments yet." />
   }
+  const printing = payments.find((payment) => payment.id === printId)
   return (
     <>
-      {payments.map((payment) => {
-        const openInvoices = invoices.filter(
-          (invoice) =>
-            invoice.resident_id === payment.resident_id &&
-            invoice.status === 'issued' &&
-            invoice.outstanding_amount !== '0.0000',
-        )
-        return (
-          <article
-            key={payment.id}
-            className={printId === payment.id ? 'billing-print' : undefined}
-            style={{ marginBottom: 20 }}
-          >
-            <ReceiptBody payment={payment} />
-            <Button className="no-print" onClick={() => onPrint(payment.id)}>
-              Print receipt {payment.reference}
-            </Button>
-            {write && payment.status === 'recorded' ? (
-              <div className="no-print">
+      <Table
+        className="data-table"
+        rowKey="id"
+        pagination={false}
+        dataSource={payments}
+        scroll={{ x: 'max-content' }}
+        expandable={{
+          expandedRowRender: (payment) => {
+            const openInvoices = invoices.filter(
+              (invoice) =>
+                invoice.resident_id === payment.resident_id &&
+                invoice.status === 'issued' &&
+                invoice.outstanding_amount !== '0.0000',
+            )
+            return (
+              <div>
+                <ReceiptBody payment={payment} showTitle={false} />
+                {write && payment.status === 'recorded' ? (
+                  <div className="no-print">
                 <Form<AllocateValues>
                   layout="vertical"
                   requiredMark={false}
@@ -668,11 +717,49 @@ function PaymentCards({
                     }
                   }}
                 />
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </article>
-        )
-      })}
+            )
+          },
+        }}
+        columns={[
+          {
+            title: 'Receipt',
+            render: (_value, payment) => `Receipt ${payment.reference}`,
+          },
+          {
+            title: 'Resident',
+            dataIndex: 'resident_name',
+          },
+          {
+            title: 'Paid',
+            dataIndex: 'paid_on',
+          },
+          {
+            title: 'Amount',
+            render: (_value, payment) => money(payment.amount, payment.currency_code),
+          },
+          {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (status: string) => <StatusTag value={status} />,
+          },
+          {
+            title: '',
+            render: (_value, payment) => (
+              <Button className="no-print" onClick={() => onPrint(payment.id)}>
+                Print receipt {payment.reference}
+              </Button>
+            ),
+          },
+        ]}
+      />
+      {printing ? (
+        <article className="billing-print">
+          <ReceiptBody payment={printing} />
+        </article>
+      ) : null}
     </>
   )
 }
@@ -694,6 +781,7 @@ function RecordPaymentForm({
   return (
     <Form<PaymentValues>
       form={form}
+      className="form-panel"
       layout="vertical"
       requiredMark={false}
       onFinish={async (values) => {
@@ -713,6 +801,7 @@ function RecordPaymentForm({
         }
       }}
     >
+      <p className="form-panel-title">Record a payment</p>
       <Form.Item
         label="Resident"
         name="resident_id"
@@ -793,20 +882,20 @@ function ArrearsList({ workspaceId }: { workspaceId: string }) {
       <Typography.Paragraph>
         Issued invoices that are due on or before this date and still have an outstanding amount.
       </Typography.Paragraph>
-      <div style={{ marginBottom: 16 }}>
-        <label htmlFor="arrears-on" style={{ display: 'block', marginBottom: 8 }}>
+      <div className="filter-bar">
+        <label className="filter-field" htmlFor="arrears-on">
           Arrears date
+          <Input
+            id="arrears-on"
+            type="date"
+            value={on}
+            onChange={(event) => {
+              setRows(null)
+              setMessage(null)
+              setOn(event.target.value)
+            }}
+          />
         </label>
-        <Input
-          id="arrears-on"
-          type="date"
-          value={on}
-          onChange={(event) => {
-            setRows(null)
-            setMessage(null)
-            setOn(event.target.value)
-          }}
-        />
       </div>
       {message ? (
         <Alert type="error" showIcon title="Arrears could not be loaded" description={message} />
@@ -817,12 +906,27 @@ function ArrearsList({ workspaceId }: { workspaceId: string }) {
       {rows && rows.length === 0 ? (
         <Typography.Paragraph>No one is in arrears on this date.</Typography.Paragraph>
       ) : null}
-      {rows?.map((invoice) => (
-        <Typography.Paragraph key={invoice.id}>
-          {invoice.reference} · {invoice.resident_name} · due {invoice.due_on} · outstanding{' '}
-          {money(invoice.outstanding_amount, invoice.currency_code)}
-        </Typography.Paragraph>
-      ))}
+      {rows && rows.length > 0 ? (
+        <Table
+          className="data-table"
+          rowKey="id"
+          pagination={false}
+          dataSource={rows}
+          scroll={{ x: 'max-content' }}
+          columns={[
+            {
+              title: 'Invoice',
+              render: (_value, invoice) =>
+                `${invoice.reference} · ${invoice.resident_name} · due ${invoice.due_on} · outstanding ${money(invoice.outstanding_amount, invoice.currency_code)}`,
+            },
+            {
+              title: 'Status',
+              dataIndex: 'status',
+              render: (status: string) => <StatusTag value={status} />,
+            },
+          ]}
+        />
+      ) : null}
     </section>
   )
 }
@@ -841,12 +945,10 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
 
   return (
     <section>
-      <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-        Your invoices
-      </Typography.Title>
-      <Typography.Paragraph>
-        You can see your own invoices, payments, and receipts.
-      </Typography.Paragraph>
+      <PageHeader
+        title="Your invoices"
+        description="You can see your own invoices, payments, and receipts."
+      />
       {message ? (
         <Alert
           type="error"
@@ -938,9 +1040,7 @@ export function BillingScreen({
   if (role === 'maintenance') {
     return (
       <section>
-        <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-          Invoices and payments
-        </Typography.Title>
+        <PageHeader title="Invoices and payments" />
         <Alert
           type="warning"
           showIcon
@@ -957,13 +1057,10 @@ export function BillingScreen({
 
   return (
     <section>
-      <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-        Invoices and payments
-      </Typography.Title>
-      <Typography.Paragraph>
-        Outstanding amounts come from invoice lines and allocations. Recording a payment does not
-        charge a card or a mobile-money account.
-      </Typography.Paragraph>
+      <PageHeader
+        title="Invoices and payments"
+        description="Outstanding amounts come from invoice lines and allocations. Recording a payment does not charge a card or a mobile-money account."
+      />
       {role === 'property_manager' ? (
         <Alert
           type="info"
@@ -973,7 +1070,7 @@ export function BillingScreen({
           description="Recording money stays with the owner and finance."
         />
       ) : null}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+      <div className="section-switch">
         {SECTIONS.map((item) => (
           <Button
             key={item.id}

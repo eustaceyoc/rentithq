@@ -9,11 +9,12 @@ import {
   Popconfirm,
   Select,
   Table,
-  Tag,
   Typography,
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { notifyCatalogChanged, useCatalogRevision } from './catalog'
+import { PageHeader } from './ui/PageHeader'
+import { StatusTag } from './ui/StatusTag'
 import {
   listBeds,
   listProperties,
@@ -245,13 +246,10 @@ function ResidentStay({ workspaceId }: { workspaceId: string }) {
 
   return (
     <section>
-      <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-        Your stay
-      </Typography.Title>
-      <Typography.Paragraph>
-        You can see your own profile and tenancy, and you can update your phone
-        and email. The owner keeps your name.
-      </Typography.Paragraph>
+      <PageHeader
+        title="Your stay"
+        description="You can see your own profile and tenancy, and you can update your phone and email. The owner keeps your name."
+      />
       {message ? (
         <Alert
           type="error"
@@ -328,13 +326,10 @@ export function OccupancyScreen({
 
   return (
     <section>
-      <Typography.Title level={2} style={{ marginTop: 0 }}>
-        {heading}
-      </Typography.Title>
-      <Typography.Paragraph>
-        The end date is the last occupied day. The space is free the next day.
-        A confirmed or active stay blocks that unit, room, or bed.
-      </Typography.Paragraph>
+      <PageHeader
+        title={heading}
+        description="The end date is the last occupied day. The space is free the next day. A confirmed or active stay blocks that unit, room, or bed."
+      />
       {!manage ? (
         <Alert
           type="info"
@@ -345,7 +340,7 @@ export function OccupancyScreen({
         />
       ) : null}
       {showSections ? (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+      <div className="section-switch">
         {SECTIONS.map((item) => (
           <Button
             key={item.id}
@@ -492,9 +487,11 @@ function ResidentsPanel({
       ) : null}
       {rows && rows.length > 0 ? (
         <Table
+          className="data-table"
           rowKey="id"
           pagination={false}
           dataSource={rows}
+          scroll={{ x: 'max-content' }}
           expandable={
             manage
               ? {
@@ -799,64 +796,92 @@ function BookingsPanel({
       {rows && rows.length === 0 ? (
         <Typography.Paragraph>No reservations yet.</Typography.Paragraph>
       ) : null}
-      {rows?.map((booking) => (
-        <div key={booking.id} style={{ marginBottom: 16 }}>
-          <Typography.Paragraph style={{ marginBottom: 8 }}>
-            <span>
-              {booking.resident_name} · {booking.status}.
-            </span>{' '}
-            <Tag>{booking.status}</Tag>{' '}
-            {stayDates(booking.start_date, booking.end_date)}
-            {booking.space_id
-              ? ` · ${spaces.find((space) => space.id === booking.space_id)?.name ?? 'Space'}`
-              : ''}
-            {booking.bed_id
-              ? ` · ${beds.find((bed) => bed.id === booking.bed_id)?.name ?? 'Bed'}`
-              : ''}
-            .
-          </Typography.Paragraph>
-          {manage && booking.status === 'confirmed' ? (
-            <>
-              <Popconfirm
-                title="Cancel this reservation?"
-                okText="Cancel reservation"
-                cancelText="Keep"
-                onConfirm={() => {
-                  void handleCancel(booking.id)
-                }}
-              >
-                <Button size="small">Cancel reservation</Button>
-              </Popconfirm>
-              <Form<StayValues>
-                layout="vertical"
-                requiredMark={false}
-                style={{ marginTop: 8 }}
-                initialValues={{ fee_period: 'month' }}
-                onFinish={(values) => {
-                  void handleConvert(booking.id, values)
-                }}
-              >
-                <Form.Item
-                  label="Agreed fee"
-                  name="fee_amount"
-                  rules={[{ required: true, message: 'Enter the agreed fee.' }]}
-                >
-                  <Input inputMode="decimal" autoComplete="off" />
-                </Form.Item>
-                <Form.Item label="Fee period" name="fee_period">
-                  <Select options={FEE_PERIODS} />
-                </Form.Item>
-                <Form.Item label="Deposit" name="deposit_amount">
-                  <Input inputMode="decimal" autoComplete="off" placeholder="0.00" />
-                </Form.Item>
-                <Button htmlType="submit" loading={saving}>
-                  Convert to tenancy
-                </Button>
-              </Form>
-            </>
-          ) : null}
-        </div>
-      ))}
+      {rows && rows.length > 0 ? (
+        <Table
+          className="data-table"
+          rowKey="id"
+          pagination={false}
+          dataSource={rows}
+          scroll={{ x: 'max-content' }}
+          style={{ marginBottom: 16 }}
+          expandable={{
+            rowExpandable: (booking) => manage && booking.status === 'confirmed',
+            expandedRowRender: (booking) =>
+              manage && booking.status === 'confirmed' ? (
+                <>
+                  <Popconfirm
+                    title="Cancel this reservation?"
+                    okText="Cancel reservation"
+                    cancelText="Keep"
+                    onConfirm={() => {
+                      void handleCancel(booking.id)
+                    }}
+                  >
+                    <Button size="small">Cancel reservation</Button>
+                  </Popconfirm>
+                  <Form<StayValues>
+                    layout="vertical"
+                    requiredMark={false}
+                    style={{ marginTop: 8, maxWidth: 420 }}
+                    initialValues={{ fee_period: 'month' }}
+                    onFinish={(values) => {
+                      void handleConvert(booking.id, values)
+                    }}
+                  >
+                    <Form.Item
+                      label="Agreed fee"
+                      name="fee_amount"
+                      rules={[{ required: true, message: 'Enter the agreed fee.' }]}
+                    >
+                      <Input inputMode="decimal" autoComplete="off" />
+                    </Form.Item>
+                    <Form.Item label="Fee period" name="fee_period">
+                      <Select options={FEE_PERIODS} />
+                    </Form.Item>
+                    <Form.Item label="Deposit" name="deposit_amount">
+                      <Input inputMode="decimal" autoComplete="off" placeholder="0.00" />
+                    </Form.Item>
+                    <Button htmlType="submit" loading={saving}>
+                      Convert to tenancy
+                    </Button>
+                  </Form>
+                </>
+              ) : null,
+          }}
+          columns={[
+            {
+              title: 'Reservation',
+              render: (_value, booking) => (
+                <span>
+                  {booking.resident_name} · {booking.status}.
+                </span>
+              ),
+            },
+            {
+              title: 'Status',
+              render: (_value, booking) => <StatusTag value={booking.status} />,
+            },
+            {
+              title: 'Dates',
+              render: (_value, booking) => stayDates(booking.start_date, booking.end_date),
+            },
+            {
+              title: 'Place',
+              render: (_value, booking) =>
+                [
+                  booking.space_id
+                    ? (spaces.find((space) => space.id === booking.space_id)?.name ?? 'Space')
+                    : '',
+                  booking.bed_id
+                    ? (beds.find((bed) => bed.id === booking.bed_id)?.name ?? 'Bed')
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · '),
+            },
+          ]}
+        />
+      ) : null}
       {manage ? (
         <>
           <Button
@@ -1049,27 +1074,42 @@ function TenanciesPanel({
       {rows && rows.length === 0 ? (
         <Typography.Paragraph>No tenancies yet.</Typography.Paragraph>
       ) : null}
-      {rows?.map((tenancy) => (
-        <div key={tenancy.id} style={{ marginBottom: 12 }}>
-          <Typography.Paragraph style={{ marginBottom: 8 }}>
-            {tenancy.resident_name} · {tenancy.status}.{' '}
-            {stayDates(tenancy.start_date, tenancy.end_date)}. Fee{' '}
-            {formatMoney(tenancy.fee_amount, tenancy.currency_code)} per {tenancy.fee_period}.
-            Deposit {formatMoney(tenancy.deposit_amount, tenancy.currency_code)}.
-          </Typography.Paragraph>
-          {manage && tenancy.status === 'active' ? (
-            <TenancyActions
-              workspaceId={workspaceId}
-              tenancy={tenancy}
-              onChanged={onChanged}
-              onError={setActionMessage}
-            />
-          ) : null}
-        </div>
-      ))}
+      {rows && rows.length > 0 ? (
+        <Table
+          className="data-table"
+          rowKey="id"
+          pagination={false}
+          dataSource={rows}
+          scroll={{ x: 'max-content' }}
+          columns={[
+            {
+              title: 'Agreement',
+              render: (_value, tenancy) =>
+                `${tenancy.resident_name} · ${tenancy.status}. ${stayDates(tenancy.start_date, tenancy.end_date)}. Fee ${formatMoney(tenancy.fee_amount, tenancy.currency_code)} per ${tenancy.fee_period}. Deposit ${formatMoney(tenancy.deposit_amount, tenancy.currency_code)}.`,
+            },
+            {
+              title: 'Status',
+              render: (_value, tenancy) => <StatusTag value={tenancy.status} />,
+            },
+            {
+              title: '',
+              render: (_value, tenancy) =>
+                manage && tenancy.status === 'active' ? (
+                  <TenancyActions
+                    workspaceId={workspaceId}
+                    tenancy={tenancy}
+                    onChanged={onChanged}
+                    onError={setActionMessage}
+                  />
+                ) : null,
+            },
+          ]}
+        />
+      ) : null}
       {manage ? (
         <Form<StayValues>
           key={reloadKey}
+          className="form-panel"
           layout="vertical"
           requiredMark={false}
           initialValues={{ fee_period: 'month' }}
@@ -1077,6 +1117,7 @@ function TenanciesPanel({
             void handleCreate(values)
           }}
         >
+          <p className="form-panel-title">New agreement</p>
           <TargetFields
             residents={residents}
             spaces={places.spaces ?? []}
@@ -1437,7 +1478,8 @@ function AvailabilityPanel({ workspaceId }: { workspaceId: string }) {
   return (
     <>
       <Form
-        layout="vertical"
+        className="filter-bar"
+        layout="inline"
         requiredMark={false}
         onFinish={() => {
           void load(on)

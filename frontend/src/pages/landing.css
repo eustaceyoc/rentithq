@@ -1,10 +1,8 @@
 .landing {
   min-height: 100vh;
-  color: #142028;
-  background:
-    radial-gradient(900px 420px at 8% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
-    radial-gradient(700px 380px at 100% 0%, rgba(16, 36, 43, 0.08), transparent 55%),
-    #f4f7f6;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--font);
 }
 
 .landing a {
@@ -13,7 +11,7 @@
 
 .landing a:focus-visible,
 .landing summary:focus-visible {
-  outline: 3px solid #0f766e;
+  outline: 3px solid var(--primary);
   outline-offset: 3px;
 }
 
@@ -32,7 +30,7 @@
 }
 
 .brand {
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: -0.03em;
   font-size: 1.15rem;
   text-decoration: none;
@@ -53,25 +51,29 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: 40px;
   padding: 0 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
   text-decoration: none;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .btn-primary {
-  background: #0f766e;
+  background: var(--primary);
+  border-color: var(--primary);
   color: #fff;
 }
 
 .btn-primary:hover {
-  background: #115e59;
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .btn-ghost {
   background: transparent;
-  color: #10242b;
+  border-color: var(--border);
+  color: var(--text);
 }
 
 .hero,
@@ -90,11 +92,9 @@
 
 .eyebrow {
   margin: 0 0 12px;
-  color: #0f766e;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 0.78rem;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .hero h1,
@@ -114,7 +114,7 @@
   max-width: 42ch;
   font-size: 1.15rem;
   line-height: 1.5;
-  color: #3d4c57;
+  color: var(--text-secondary);
 }
 
 .hero-actions {
@@ -131,12 +131,12 @@
   border-radius: 18px;
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 24px 60px rgba(16, 36, 43, 0.12);
-  border: 1px solid rgba(16, 36, 43, 0.06);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 32px rgba(16, 36, 43, 0.08);
 }
 
 .preview-side {
-  background: #10242b;
+  background: var(--sidebar);
   color: #d5e4e2;
   padding: 18px 14px;
   display: flex;
@@ -157,7 +157,7 @@
 }
 
 .preview-side .on {
-  background: #1c4f4c;
+  background: var(--accent);
   color: #fff;
 }
 
@@ -175,7 +175,7 @@
 .preview-kpis div,
 .preview-row {
   background: #fff;
-  border: 1px solid #e4e9ee;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
 }
@@ -183,14 +183,14 @@
 .preview-kpis small,
 .preview-row small {
   display: block;
-  color: #5c6b7a;
+  color: var(--text-secondary);
 }
 
 .preview-kpis b {
   display: block;
   margin-top: 6px;
   font-size: 1.35rem;
-  color: #0f766e;
+  color: var(--primary);
 }
 
 .preview-list {
@@ -207,9 +207,9 @@
 }
 
 .pill {
-  border-radius: 999px;
+  border-radius: 8px;
   background: #e7f4f2;
-  color: #115e59;
+  color: var(--primary-hover);
   padding: 4px 8px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -226,7 +226,7 @@
   margin: 0;
   padding: 16px;
   border-radius: 14px;
-  background: #10242b;
+  background: var(--sidebar);
   color: #e7f0ee;
   line-height: 1.4;
 }
@@ -242,7 +242,7 @@
 
 .section-intro {
   margin: 12px 0 22px;
-  color: #3d4c57;
+  color: var(--text-secondary);
   max-width: 52ch;
 }
 
@@ -257,8 +257,8 @@
 .faq details,
 .cta-band {
   background: #fff;
-  border: 1px solid #e4e9ee;
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
 }
 
 .features article {
@@ -275,7 +275,7 @@
 .steps p,
 .faq p {
   margin: 0;
-  color: #3d4c57;
+  color: var(--text-secondary);
   line-height: 1.45;
 }
 
@@ -300,8 +300,8 @@
   justify-content: center;
   border-radius: 50%;
   background: #e7f4f2;
-  color: #0f766e;
-  font-weight: 750;
+  color: var(--primary);
+  font-weight: 700;
   margin-bottom: 12px;
 }
 
@@ -333,9 +333,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 18px;
-  background:
-    linear-gradient(135deg, rgba(15, 118, 110, 0.12), transparent 45%),
-    #fff;
+  background: var(--surface);
 }
 
 .cta-band h2 {
@@ -346,7 +344,7 @@
 
 .cta-band p {
   margin: 0;
-  color: #3d4c57;
+  color: var(--text-secondary);
 }
 
 .landing-footer {
@@ -355,7 +353,7 @@
   font-size: 0.92rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 991px) {
   .hero,
   .problems,
   .features,

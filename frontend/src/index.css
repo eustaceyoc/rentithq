@@ -1,3 +1,30 @@
+:root {
+  --bg: #f4f7f6;
+  --surface: #ffffff;
+  --text: #1c2430;
+  --text-secondary: #5c6b7a;
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --accent: #1c4f4c;
+  --border: #e4e9ee;
+  --success: #3d7a4a;
+  --warning: #b86e2a;
+  --danger: #b42318;
+  --sidebar: #10242b;
+  --sidebar-muted: #9fb8b4;
+  --font: system-ui, 'Segoe UI', sans-serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --control-height: 40px;
+  color-scheme: light;
+}
+
 html,
 body,
 #root {
@@ -6,19 +33,218 @@ body,
 }
 
 body {
-  background: #f3f5f7;
-  color: #1c2430;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
 }
 
 .boot {
   margin: 48px auto;
   max-width: 40rem;
   padding: 0 16px;
-  font-family: system-ui, 'Segoe UI', sans-serif;
+  font-family: var(--font);
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.page-header-copy {
+  min-width: 0;
+  max-width: 72ch;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.page-description {
+  margin: var(--space-2) 0 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.section-switch,
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.filter-field {
+  display: grid;
+  gap: var(--space-1);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.filter-field input {
+  min-height: var(--control-height);
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.filter-field input:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+}
+
+.kpi-lead {
+  border-top: 3px solid var(--primary);
+}
+
+.kpi-label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.kpi-value {
+  margin: var(--space-2) 0 0;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.kpi-note {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.form-panel {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  max-width: 560px;
+}
+
+.form-panel-title {
+  margin: 0 0 var(--space-3);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.auth-frame {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 48px 16px;
+  background: var(--bg);
+}
+
+.auth-frame .ant-card {
+  width: min(480px, 100%);
+  margin: 0 auto;
+}
+
+.sider-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px 12px;
+  min-height: 72px;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.account-menu {
+  max-width: 46vw;
+}
+
+.account-menu span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.data-table {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+@media (max-width: 991px) {
+  .page-title {
+    font-size: 24px;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ant-drawer-content-wrapper,
+  .ant-modal,
+  .ant-menu-item {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 #root {
   min-height: 100vh;
+}
+
+.billing-print {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media print {
@@ -36,6 +262,9 @@ body {
     left: 0;
     top: 0;
     width: 100%;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
     background: #fff;
   }
 

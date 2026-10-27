@@ -1,4 +1,4 @@
-import { Alert, Button, Form, Input, Select, Typography } from 'antd'
+import { Alert, Button, Empty, Form, Input, Select, Table, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import {
   createMaintenanceRequest,
@@ -11,6 +11,8 @@ import { listBeds, listProperties, listSpaces, type BedRecord, type PropertyReco
 import { errorText, listMembers, type Member } from './api/session'
 import { useCatalogRevision } from './catalog'
 import { formatMoney } from './money'
+import { PageHeader } from './ui/PageHeader'
+import { StatusTag } from './ui/StatusTag'
 
 const PRIORITIES = [
   { value: 'low', label: 'Low' },
@@ -206,18 +208,18 @@ export function MaintenanceScreen({
 
   return (
     <section id="maintenance">
-      <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
-        Maintenance
-      </Typography.Title>
-      <Typography.Paragraph>
-        {resident
-          ? 'File a request for your own stay and follow its status. You cannot change the status or the cost.'
-          : triage
-            ? 'File a request for a property, room, or bed, then assign it. A request does not block the space.'
-            : role === 'maintenance'
-              ? 'You see requests assigned to you, and requests you filed that nobody has taken yet.'
-              : 'You can file a request. The owner or property manager assigns it.'}
-      </Typography.Paragraph>
+      <PageHeader
+        title="Maintenance"
+        description={
+          resident
+            ? 'File a request for your own stay and follow its status. You cannot change the status or the cost.'
+            : triage
+              ? 'File a request for a property, room, or bed, then assign it. A request does not block the space.'
+              : role === 'maintenance'
+                ? 'You see requests assigned to you, and requests you filed that nobody has taken yet.'
+                : 'You can file a request. The owner or property manager assigns it.'
+        }
+      />
       {phase === 'loading' ? (
         <Typography.Paragraph>Loading maintenance requests…</Typography.Paragraph>
       ) : null}
@@ -235,9 +237,9 @@ export function MaintenanceScreen({
         />
       ) : null}
       {phase === 'ready' && requests?.length === 0 ? (
-        <Typography.Paragraph>
-          {resident ? 'You have not filed a request.' : 'No maintenance requests yet.'}
-        </Typography.Paragraph>
+        <Empty
+          description={resident ? 'You have not filed a request.' : 'No maintenance requests yet.'}
+        />
       ) : null}
       {actionMessage ? (
         <Alert
@@ -250,6 +252,7 @@ export function MaintenanceScreen({
       ) : null}
       {phase === 'ready' ? (
         <Form<FileValues>
+          className="form-panel"
           layout="vertical"
           requiredMark={false}
           initialValues={{ priority: 'normal' }}
@@ -257,6 +260,7 @@ export function MaintenanceScreen({
             void handleFile(values)
           }}
         >
+          <p className="form-panel-title">File a request</p>
           {resident ? (
             <Form.Item label="Place on your stay" name="place">
               <Select
@@ -341,39 +345,71 @@ export function MaintenanceScreen({
           </Button>
         </Form>
       ) : null}
-      {requests?.map((row) => (
-        <div key={row.id} style={{ marginTop: 16 }}>
-          <Typography.Paragraph style={{ marginBottom: 4 }}>
-            {row.reference} · {row.priority} · {row.status}. {placeLabel(row)}.
-            {row.resident_name ? ` ${row.resident_name}.` : ''}
-          </Typography.Paragraph>
-          <Typography.Paragraph style={{ marginBottom: 4 }}>{row.description}</Typography.Paragraph>
-          {row.location_blocked ? (
-            <Typography.Paragraph style={{ marginBottom: 4 }}>
-              This place is already unavailable for maintenance. The request does not change that.
-            </Typography.Paragraph>
-          ) : null}
-          {row.cost_amount ? (
-            <Typography.Paragraph style={{ marginBottom: 4 }}>
-              Cost {formatMoney(row.cost_amount, row.currency_code)}.
-            </Typography.Paragraph>
-          ) : null}
-          {row.assignee_email ? (
-            <Typography.Paragraph style={{ marginBottom: 4 }}>
-              Assigned to {row.assignee_email}.
-            </Typography.Paragraph>
-          ) : null}
-          <ul style={{ paddingInlineStart: 18 }}>
-            {row.updates.map((update) => (
-              <li key={update.id}>
-                {update.status_before ? `${update.status_before} → ` : ''}
-                {update.status_after}
-                {update.note ? `. ${update.note}` : ''}
-              </li>
-            ))}
-          </ul>
-          {canUpdate ? (
+      {requests && requests.length > 0 ? (
+        <Table
+          className="data-table"
+          style={{ marginTop: 16 }}
+          rowKey="id"
+          pagination={false}
+          dataSource={requests}
+          scroll={{ x: 'max-content' }}
+          columns={[
+            {
+              title: 'Request',
+              render: (_value, row) => (
+                <div>
+                  <span>
+                    {row.reference} · {row.priority} · {row.status}
+                  </span>
+                  <Typography.Paragraph style={{ margin: '4px 0 0' }}>
+                    {placeLabel(row)}.
+                    {row.resident_name ? ` ${row.resident_name}.` : ''}
+                  </Typography.Paragraph>
+                  {row.location_blocked ? (
+                    <Typography.Paragraph style={{ marginBottom: 0 }}>
+                      This place is already unavailable for maintenance. The request does not change that.
+                    </Typography.Paragraph>
+                  ) : null}
+                  {row.cost_amount ? (
+                    <Typography.Paragraph style={{ marginBottom: 0 }}>
+                      Cost {formatMoney(row.cost_amount, row.currency_code)}.
+                    </Typography.Paragraph>
+                  ) : null}
+                  {row.assignee_email ? (
+                    <Typography.Paragraph style={{ marginBottom: 0 }}>
+                      Assigned to {row.assignee_email}.
+                    </Typography.Paragraph>
+                  ) : null}
+                </div>
+              ),
+            },
+            {
+              title: 'Status',
+              render: (_value, row) => <StatusTag value={row.status} />,
+            },
+            { title: 'Description', dataIndex: 'description' },
+            {
+              title: 'Updates',
+              render: (_value, row) => (
+                <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                  {row.updates.map((update) => (
+                    <li key={update.id}>
+                      {update.status_before ? `${update.status_before} → ` : ''}
+                      {update.status_after}
+                      {update.note ? `. ${update.note}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              ),
+            },
+          ]}
+        />
+      ) : null}
+      {canUpdate
+        ? requests?.map((row) => (
             <Form<UpdateValues>
+              key={row.id}
+              className="form-panel"
               layout="vertical"
               requiredMark={false}
               initialValues={{ status: row.status, assignee_id: row.assignee_id ?? undefined }}
@@ -381,6 +417,7 @@ export function MaintenanceScreen({
                 void handleUpdate(row.id, values)
               }}
             >
+              <p className="form-panel-title">Update {row.reference}</p>
               <Form.Item label={`Status for ${row.reference}`} name="status">
                 <Select options={STATUSES} />
               </Form.Item>
@@ -406,9 +443,8 @@ export function MaintenanceScreen({
               </Form.Item>
               <Button htmlType="submit">Save {row.reference}</Button>
             </Form>
-          ) : null}
-        </div>
-      ))}
+          ))
+        : null}
     </section>
   )
 }

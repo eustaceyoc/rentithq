@@ -9,8 +9,12 @@ export const theme: ThemeConfig = {
     colorError: '#b42318',
     colorText: '#1c2430',
     colorTextSecondary: '#5c6b7a',
-    colorBgLayout: '#f3f5f7',
+    colorBgLayout: '#f4f7f6',
     colorBorder: '#e4e9ee',
+    colorPrimaryHover: '#115e59',
+    colorPrimaryActive: '#0f5c56',
+    controlOutline: 'rgba(15, 118, 110, 0.35)',
+    controlOutlineWidth: 3,
     borderRadius: 10,
     fontFamily: "system-ui, 'Segoe UI', sans-serif",
     fontSize: 15,
@@ -20,7 +24,7 @@ export const theme: ThemeConfig = {
     Layout: {
       siderBg: '#10242b',
       headerBg: '#ffffff',
-      bodyBg: '#f3f5f7',
+      bodyBg: '#f4f7f6',
       headerHeight: 64,
     },
     Menu: {
@@ -34,9 +38,16 @@ export const theme: ThemeConfig = {
     Card: {
       borderRadiusLG: 14,
     },
+    Button: {
+      primaryShadow: 'none',
+      defaultShadow: 'none',
+      dangerShadow: 'none',
+    },
     Table: {
       headerBg: '#f7f9fa',
       headerColor: '#3d4d5c',
+      rowHoverBg: '#f4f7f6',
+      headerSplitColor: '#e4e9ee',
     },
   },
 }
