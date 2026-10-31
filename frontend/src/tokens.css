@@ -1,0 +1,72 @@
+@font-face {
+  font-family: Newsreader;
+  src: url('/fonts/newsreader-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Newsreader;
+  src: url('/fonts/newsreader-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/atkinson-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/atkinson-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --ink: #1b1612;
+  --ink-soft: #3a312a;
+  --cream: #f4ebdd;
+  --cream-deep: #e4d5c0;
+  --paper: #fbf6ee;
+  --surface: #fff9f1;
+  --clay: #8f4328;
+  --clay-hover: #732f1c;
+  --amber: #d3922a;
+  --text: #1b1612;
+  --text-secondary: #53463c;
+  --text-muted: #6f6256;
+  --border: #d5c4ae;
+  --success: #216846;
+  --warning: #9a6412;
+  --danger: #9e342e;
+  --on-ink: #f8e7c4;
+  --sidebar: var(--ink);
+  --sidebar-muted: #c8b7a4;
+  --bg: var(--cream);
+  --primary: var(--ink);
+  --primary-hover: var(--ink-soft);
+  --accent: var(--clay);
+  --font: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --display: Newsreader, Georgia, serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 80px;
+  --radius-control: 6px;
+  --radius-card: 8px;
+  --shadow-window: 0 18px 40px rgba(27, 22, 18, 0.08);
+  --control-height: 40px;
+  color-scheme: light;
+}

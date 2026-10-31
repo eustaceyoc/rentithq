@@ -1,29 +1,4 @@
-:root {
-  --bg: #f4f7f6;
-  --surface: #ffffff;
-  --text: #1c2430;
-  --text-secondary: #5c6b7a;
-  --primary: #0f766e;
-  --primary-hover: #115e59;
-  --accent: #1c4f4c;
-  --border: #e4e9ee;
-  --success: #3d7a4a;
-  --warning: #b86e2a;
-  --danger: #b42318;
-  --sidebar: #10242b;
-  --sidebar-muted: #9fb8b4;
-  --font: system-ui, 'Segoe UI', sans-serif;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --radius-control: 10px;
-  --radius-card: 14px;
-  --control-height: 40px;
-  color-scheme: light;
-}
+@import './tokens.css';
 
 html,
 body,
@@ -61,10 +36,18 @@ body {
 
 .page-title {
   margin: 0;
-  font-size: 28px;
-  font-weight: 600;
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 500;
   letter-spacing: -0.03em;
-  line-height: 1.15;
+  line-height: 1.1;
+}
+
+h1.ant-typography,
+h2.ant-typography,
+h3.ant-typography {
+  font-family: var(--display);
+  font-weight: 500;
 }
 
 .page-description {
@@ -189,9 +172,9 @@ body {
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 8px;
-  background: var(--primary);
-  color: #fff;
+  border-radius: var(--radius-control);
+  background: var(--clay);
+  color: #fff7f2;
   font-size: 14px;
   font-weight: 700;
 }
