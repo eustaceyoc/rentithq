@@ -29,7 +29,7 @@ Health: `https://THAT-HOST/api/v1/health/` should say `ok`. `https://THAT-HOST/a
 3. Open `frontend/vercel.json`. Replace every `RENDER_SERVICE_HOST` with the Render hostname from step 4 above. It appears four times and they must all match. Example shape, not a real service:
 
 ```json
-"destination": "https://rentithq-api.onrender.com/api/:path*"
+"destination": "https://rentithq-api.onrender.com/api/$1"
 ```
 
 4. Deploy. The site URL will look like `https://something.vercel.app`.
