@@ -14,17 +14,11 @@ Do the Render service first. You need its hostname before the Vercel proxy can p
 2. The blueprint creates a free web service named `rentithq-api` and a free Postgres database named `rentithq-db`, both in Frankfurt. If Render rejects that region, change both to the same region and apply again. They have to match.
 3. Render asks for the values marked `sync: false`. Fill them before the first build. The list is in the next section. `DJANGO_SECRET_KEY` and `DATABASE_URL` are filled by the blueprint. Do not paste a database URL by hand.
 4. Wait until the service is live. Open the service page and copy the hostname only, for example `rentithq-api.onrender.com`. No `https://`, no path. If the name was already taken, Render will have added a suffix. Use the hostname it actually shows.
-5. Open the Shell for that service and run:
-
-```bash
-python manage.py seed_demo
-```
-
-The database does not accept connections from a laptop. `ipAllowList` is empty, so use this shell.
+5. Nothing else to run. On the free plan there is no shell or pre-deploy step, so every start runs `migrate` and then `seed_demo` before gunicorn. Both are safe to run again. If `DEMO_EMAIL` or `DEMO_PASSWORD` is missing, the seed is skipped and the app still starts.
 
 The free web service sleeps after a quiet period. The first click after that can take about a minute. The free database is removed after 30 days unless you move it to a paid plan. Treat everything in it as disposable.
 
-If a deploy says migrations did not run, open the shell and run `python manage.py migrate --noinput`.
+If migrations fail, the service will not start. The reason is in the Render logs.
 
 Health: `https://THAT-HOST/api/v1/health/` should say `ok`. `https://THAT-HOST/api/v1/health/ready/` also checks Postgres.
 
@@ -112,8 +106,8 @@ Paystack signs the raw body. A browser return from checkout is not a payment.
 - Create the Render blueprint and fill the blank environment values.
 - Replace `RENDER_SERVICE_HOST` in `frontend/vercel.json`, then deploy Vercel with root directory `frontend`.
 - Copy the Vercel hostname back into the three Render address variables.
-- Run `python manage.py seed_demo` in the Render shell.
-- Create a Django superuser in that shell if I want `/admin/`: `python manage.py createsuperuser`.
+- Nothing to run for the demo data. It seeds itself on start.
+- `/admin/` needs a superuser. The free plan has no shell, so that waits for a paid plan or a one-off job.
 - Paste Paystack test keys and the webhook, when I want to try a test charge.
 - Point a custom domain, if I buy one. Then add that hostname the same way as the Vercel hostname.
 

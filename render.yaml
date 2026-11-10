@@ -1,5 +1,6 @@
 # Test site. Free web service and a free Postgres database.
 # The public hostname is whatever Render assigns. It is not written here.
+# The free plan has no pre-deploy step or shell, so migrations and the demo seed run at startup.
 databases:
   - name: rentithq-db
     plan: free
@@ -17,8 +18,7 @@ services:
     region: frankfurt
     rootDir: backend
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    preDeployCommand: python manage.py migrate --noinput
-    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120
+    startCommand: python manage.py migrate --noinput && (python manage.py seed_demo || echo "Demo seed skipped") && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120
     healthCheckPath: /api/v1/health/
     envVars:
       - key: PYTHON_VERSION
