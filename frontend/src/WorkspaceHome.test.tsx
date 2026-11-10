@@ -244,6 +244,15 @@ describe('Workspace home', () => {
           upcoming_move_outs: [],
         })
       }
+      if (url.includes('/plan/')) {
+        return jsonResponse({
+          plan_code: 'placeholder',
+          property_count: 2,
+          property_limit: 2,
+          staff_seat_count: 1,
+          staff_seat_limit: null,
+        })
+      }
       if (
         url.includes('/properties/') ||
         url.includes('/buildings/') ||
@@ -280,6 +289,9 @@ describe('Workspace home', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }))
     fireEvent.click(await screen.findByRole('link', { name: 'Settings' }))
     expect(await screen.findAllByText('ada@example.com')).not.toHaveLength(0)
+    expect(await screen.findByText(/Properties: 2 of 2/)).toBeInTheDocument()
+    expect(screen.getByText(/This plan cannot add another/)).toBeInTheDocument()
+    expect(screen.getByText(/Staff seats: 1. No cap on this plan/)).toBeInTheDocument()
   })
 
   it('does not load properties for a resident', async () => {

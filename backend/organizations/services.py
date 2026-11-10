@@ -174,6 +174,9 @@ def add_member(*, actor: Membership, email: str, role: str) -> Membership:
     _require_owner(actor, actor.workspace)
     if role not in Membership.Role.values:
         raise ValidationError({"role": "Choose a valid role."})
+    from organizations.plans import ensure_staff_seat
+
+    ensure_staff_seat(actor.workspace, role)
     try:
         normalized = User.objects.normalize_user_email(email)
     except ValueError as exc:
@@ -251,6 +254,10 @@ def change_member_role(
         and len(owners) <= 1
     ):
         raise ValidationError({"role": "The workspace must keep an owner."})
+    from organizations.plans import STAFF_ROLES, ensure_staff_seat
+
+    if role in STAFF_ROLES and locked.role not in STAFF_ROLES:
+        ensure_staff_seat(actor.workspace, role)
     locked.role = role
     locked.save(update_fields=["role", "updated_at"])
     _audit(

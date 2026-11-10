@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.http import HttpRequest
 
-from organizations.models import AuditEvent, Membership, Workspace
+from organizations.models import AuditEvent, Membership, Plan, Workspace
 
 
 @admin.register(Workspace)
@@ -62,3 +62,10 @@ class AuditEventAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         self, request: HttpRequest, obj: AuditEvent | None = None
     ) -> bool:
         return False
+
+
+@admin.register(Plan)
+class PlanAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    list_display = ("plan_code", "property_limit", "staff_seat_limit")
+    search_fields = ("plan_code",)
+    readonly_fields = ("created_at", "updated_at")

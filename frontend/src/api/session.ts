@@ -400,6 +400,39 @@ export async function listMembers(
   return body.results
 }
 
+export type PlanUsage = {
+  plan_code: string
+  property_count: number
+  property_limit: number | null
+  staff_seat_count: number
+  staff_seat_limit: number | null
+}
+
+export async function loadPlanUsage(
+  workspaceId: string,
+  signal?: AbortSignal,
+): Promise<PlanUsage> {
+  const response = await request('/api/v1/plan/', { workspaceId, signal })
+  if (!response.ok) {
+    throw await errorFromResponse(response)
+  }
+  const body: unknown = await response.json()
+  if (
+    !isRecord(body) ||
+    typeof body.property_count !== 'number' ||
+    typeof body.staff_seat_count !== 'number'
+  ) {
+    throw new ApiError('The API returned an unexpected response.')
+  }
+  return {
+    plan_code: typeof body.plan_code === 'string' ? body.plan_code : '',
+    property_count: body.property_count,
+    property_limit: typeof body.property_limit === 'number' ? body.property_limit : null,
+    staff_seat_count: body.staff_seat_count,
+    staff_seat_limit: typeof body.staff_seat_limit === 'number' ? body.staff_seat_limit : null,
+  }
+}
+
 export async function addMember(
   workspaceId: string,
   input: { email: string; role: string },

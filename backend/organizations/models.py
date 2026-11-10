@@ -216,3 +216,38 @@ class AuditEvent(models.Model):
 
     def __str__(self) -> str:
         return self.action
+
+
+class Plan(models.Model):
+    """Caps for one plan_code. A blank limit means unlimited.
+
+    Platform staff edit this in Django admin. A workspace whose plan_code has
+    no Plan row is also unlimited, so existing workspaces are not blocked.
+    """
+
+    plan_code = models.CharField(max_length=32, unique=True)
+    property_limit = models.PositiveIntegerField(null=True, blank=True)
+    staff_seat_limit = models.PositiveIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["plan_code"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(plan_code__regex=r"^[a-z][a-z0-9_]{0,31}$"),
+                name="organizations_plan_code_shape",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.plan_code
+
+    def clean(self) -> None:
+        self.plan_code = self.plan_code.strip().lower()
+        if re.fullmatch(r"[a-z][a-z0-9_]{0,31}", self.plan_code) is None:
+            raise ValidationError({"plan_code": "Use a short plan code."})
+
+    def save(self, **kwargs: Any) -> None:
+        self.full_clean()
+        super().save(**kwargs)

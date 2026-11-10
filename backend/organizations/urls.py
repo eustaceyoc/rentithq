@@ -3,6 +3,7 @@ from django.urls import path
 from organizations.views import (
     MembershipDetailView,
     MembershipListCreateView,
+    PlanUsageView,
     WorkspaceDetailView,
     WorkspaceListCreateView,
 )
@@ -20,4 +21,5 @@ urlpatterns = [
         MembershipDetailView.as_view(),
         name="membership-detail",
     ),
+    path("plan/", PlanUsageView.as_view(), name="plan-usage"),
 ]

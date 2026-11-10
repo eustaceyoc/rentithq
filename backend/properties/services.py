@@ -154,6 +154,9 @@ def get_property(actor: Membership, raw_id: str) -> Property:
 @transaction.atomic
 def create_property(*, actor: Membership, data: dict[str, Any]) -> Property:
     ensure_can_manage_properties(actor)
+    from organizations.plans import ensure_property_capacity
+
+    ensure_property_capacity(actor.workspace)
     row = Property(
         workspace=actor.workspace,
         name=data["name"],

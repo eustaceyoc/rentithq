@@ -20,10 +20,12 @@ import {
   createWorkspace,
   errorText,
   listMembers,
+  loadPlanUsage,
   loadSession,
   removeMember,
   signOut,
   type Member,
+  type PlanUsage,
   type SessionMembership,
   type SessionPayload,
   type WorkspaceSummary,
@@ -52,6 +54,16 @@ const INVITE_ROLES = [
 
 function roleLabel(role: string): string {
   return ROLE_LABELS[role] ?? role
+}
+
+function planLine(label: string, count: number, limit: number | null): string {
+  if (limit == null) {
+    return `${label}: ${count}. No cap on this plan.`
+  }
+  if (count >= limit) {
+    return `${label}: ${count} of ${limit}. This plan cannot add another.`
+  }
+  return `${label}: ${count} of ${limit}.`
 }
 
 type WorkspaceValues = {
@@ -193,6 +205,8 @@ function WorkspacePanel({
   const [inviteMessage, setInviteMessage] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [inviting, setInviting] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null)
   const available = workspace.status === 'active'
   const isOwner = membership.role === 'owner'
 
@@ -212,6 +226,17 @@ function WorkspacePanel({
           return
         }
         setMemberMessage(errorText(error))
+      })
+    loadPlanUsage(workspace.id, controller.signal)
+      .then((usage) => {
+        if (!controller.signal.aborted) {
+          setPlanUsage(usage)
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setPlanUsage(null)
+        }
       })
     return () => {
       controller.abort()
@@ -248,7 +273,6 @@ function WorkspacePanel({
     }
   }
 
-  const [inviteOpen, setInviteOpen] = useState(false)
   const settings = (
     <>
       <PageHeader
@@ -260,6 +284,12 @@ function WorkspacePanel({
           </>
         }
       />
+      {planUsage ? (
+        <Typography.Paragraph>
+          {planLine('Properties', planUsage.property_count, planUsage.property_limit)}{' '}
+          {planLine('Staff seats', planUsage.staff_seat_count, planUsage.staff_seat_limit)}
+        </Typography.Paragraph>
+      ) : null}
       <div className="form-panel" style={{ marginTop: 0, marginBottom: 24 }}>
         <ChangePasswordForm />
       </div>

@@ -23,6 +23,7 @@ from organizations.access import (
     workspaces_for_user,
 )
 from organizations.models import Membership
+from organizations.plans import usage
 from organizations.serializers import (
     MembershipCreateSerializer,
     MembershipSerializer,
@@ -181,3 +182,10 @@ class MembershipDetailView(APIView):
         membership = membership_in_scope(actor, membership_id)
         deactivate_member(actor=actor, membership=membership)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PlanUsageView(APIView):
+    def get(self, request: Request) -> Response:
+        user = require_user(request)
+        actor = resolve_active_membership(user, request.headers.get(WORKSPACE_HEADER))
+        return Response(usage(actor.workspace))
