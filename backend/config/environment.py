@@ -102,7 +102,7 @@ def validate_production_environment(environ: Mapping[str, str]) -> None:
     secret = environ["DJANGO_SECRET_KEY"].strip()
     lowered = secret.lower()
     if (
-        len(secret) < 50
+        len(secret) < 40
         or len(set(secret)) < 5
         or lowered.startswith(_WEAK_SECRET_PREFIXES)
         or "insecure" in lowered
