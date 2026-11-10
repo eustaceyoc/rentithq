@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react'
 import {
   allocatePayment,
   createInvoice,
+  generateRecurringInvoices,
   listArrears,
   listInvoices,
   listPayments,
   recordPayment,
   refundPayment,
   reverseAllocation,
+  startPaystackPayment,
   voidInvoice,
   voidPayment,
   type InvoiceRecord,
@@ -83,6 +85,54 @@ type RefundValues = {
 
 function canWrite(role: string): boolean {
   return role === 'owner' || role === 'finance'
+}
+
+function RecurringRent({ workspaceId }: { workspaceId: string }) {
+  const [note, setNote] = useState<string | null>(null)
+
+  async function run(dryRun: boolean) {
+    setNote(null)
+    try {
+      const result = await generateRecurringInvoices(workspaceId, {
+        as_of: today(),
+        dry_run: dryRun,
+      })
+      setNote(
+        dryRun
+          ? `Preview: ${result.created_count} rent invoice${result.created_count === 1 ? '' : 's'} would be issued. Nothing was saved.`
+          : `Issued ${result.created_count} rent invoice${result.created_count === 1 ? '' : 's'}. Running this again does not duplicate them.`,
+      )
+    } catch (error: unknown) {
+      setNote(errorText(error))
+    }
+  }
+
+  return (
+    <div className="form-panel" style={{ marginTop: 0, marginBottom: 16 }}>
+      <p className="form-panel-title">Recurring rent</p>
+      <Typography.Paragraph>
+        Issue the agreed fee for each period that has started. A manual invoice is still available.
+      </Typography.Paragraph>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <Button
+          onClick={() => {
+            void run(true)
+          }}
+        >
+          Preview recurring invoices
+        </Button>
+        <Button
+          type="primary"
+          onClick={() => {
+            void run(false)
+          }}
+        >
+          Generate recurring invoices
+        </Button>
+      </div>
+      {note ? <Typography.Paragraph style={{ marginTop: 12 }}>{note}</Typography.Paragraph> : null}
+    </div>
+  )
 }
 
 function money(amount: string, currency: string): string {
@@ -935,6 +985,7 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
   const { invoices, payments, message } = useBillingLists(workspaceId, false, true)
   const [printId, setPrintId] = useState<string | null>(null)
   const [printToken, setPrintToken] = useState(0)
+  const [payNote, setPayNote] = useState<string | null>(null)
 
   useEffect(() => {
     if (printToken === 0) {
@@ -942,6 +993,21 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
     }
     window.print()
   }, [printToken])
+
+  async function pay(invoiceId: string, reference: string) {
+    setPayNote(null)
+    try {
+      const started = await startPaystackPayment(workspaceId, {
+        invoice_id: invoiceId,
+        channel: 'mobile_money',
+      })
+      setPayNote(
+        `Continue to Paystack for ${reference}. The payment is recorded only after Paystack notifies Rent It HQ. ${started.authorization_url}`,
+      )
+    } catch (error: unknown) {
+      setPayNote(errorText(error))
+    }
+  }
 
   return (
     <section>
@@ -982,8 +1048,20 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
           >
             Print invoice {invoice.reference}
           </Button>
+          {invoice.status === 'issued' ? (
+            <Button
+              className="no-print"
+              style={{ marginLeft: 8 }}
+              onClick={() => {
+                void pay(invoice.id, invoice.reference)
+              }}
+            >
+              Pay {invoice.reference} with Paystack
+            </Button>
+          ) : null}
         </article>
       ))}
+      {payNote ? <Typography.Paragraph>{payNote}</Typography.Paragraph> : null}
       <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
         Your payments
       </Typography.Title>
@@ -1059,8 +1137,9 @@ export function BillingScreen({
     <section>
       <PageHeader
         title="Invoices and payments"
-        description="Outstanding amounts come from invoice lines and allocations. Recording a payment does not charge a card or a mobile-money account."
+        description="Outstanding amounts come from invoice lines and allocations. Recording a payment does not charge a card or a mobile-money account. A Paystack charge is confirmed only by the webhook."
       />
+      {write ? <RecurringRent workspaceId={workspaceId} /> : null}
       {role === 'property_manager' ? (
         <Alert
           type="info"

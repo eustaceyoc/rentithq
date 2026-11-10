@@ -574,3 +574,11 @@ class Refund(models.Model):
     def save(self, **kwargs: Any) -> None:
         self.full_clean()
         super().save(**kwargs)
+
+
+from billing.phase02_models import (  # noqa: E402, F401
+    BillingJobRun,
+    PaymentAttempt,
+    ProviderEvent,
+    RecurringCharge,
+)

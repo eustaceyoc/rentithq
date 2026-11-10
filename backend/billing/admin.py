@@ -11,6 +11,12 @@ from billing.models import (
     PaymentVoid,
     Refund,
 )
+from billing.phase02_models import (
+    BillingJobRun,
+    PaymentAttempt,
+    ProviderEvent,
+    RecurringCharge,
+)
 
 
 class _HistoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
@@ -94,3 +100,23 @@ class AllocationReversalAdmin(_HistoryAdmin):
 class RefundAdmin(_HistoryAdmin):
     list_display = ("payment", "amount", "refunded_on", "workspace")
     readonly_fields = ("id", "created_at")
+
+
+@admin.register(BillingJobRun)
+class BillingJobRunAdmin(_HistoryAdmin):
+    list_display = ("kind", "as_of", "status", "created_count", "dry_run", "workspace")
+
+
+@admin.register(PaymentAttempt)
+class PaymentAttemptAdmin(_HistoryAdmin):
+    list_display = ("reference", "status", "channel", "amount", "workspace")
+
+
+@admin.register(ProviderEvent)
+class ProviderEventAdmin(_HistoryAdmin):
+    list_display = ("provider", "provider_event_id", "status", "workspace")
+
+
+@admin.register(RecurringCharge)
+class RecurringChargeAdmin(_HistoryAdmin):
+    list_display = ("period_start", "tenancy", "invoice", "workspace")

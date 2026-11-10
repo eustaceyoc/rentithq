@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "billing.apps.BillingConfig",
     "maintenance.apps.MaintenanceConfig",
     "reports.apps.ReportsConfig",
+    "notifications.apps.NotificationsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -149,6 +150,13 @@ DEFAULT_FROM_EMAIL = (
 FRONTEND_BASE_URL = (
     os.environ.get("FRONTEND_BASE_URL", "http://127.0.0.1:43123").strip().rstrip("/")
     or "http://127.0.0.1:43123"
+)
+# Test secret only. A key starting with sk_live_ is refused at call time.
+PAYSTACK_SECRET_KEY = os.environ.get("PAYSTACK_SECRET_KEY", "").strip()
+PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY", "").strip()
+PAYSTACK_BASE_URL = (
+    os.environ.get("PAYSTACK_BASE_URL", "https://api.paystack.co").strip()
+    or "https://api.paystack.co"
 )
 # PasswordResetTokenGenerator treats a token as expired after this many seconds.
 PASSWORD_RESET_TIMEOUT = 60 * 60

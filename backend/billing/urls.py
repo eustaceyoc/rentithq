@@ -1,5 +1,10 @@
 from django.urls import path
 
+from billing.phase02_views import (
+    PaystackInitializeView,
+    PaystackWebhookView,
+    RecurringInvoiceView,
+)
 from billing.views import (
     AllocationCreateView,
     AllocationReverseView,
@@ -48,4 +53,19 @@ urlpatterns = [
         name="allocation-reverse",
     ),
     path("arrears/", ArrearsView.as_view(), name="arrears"),
+    path(
+        "billing/recurring/",
+        RecurringInvoiceView.as_view(),
+        name="billing-recurring",
+    ),
+    path(
+        "billing/paystack/initialize/",
+        PaystackInitializeView.as_view(),
+        name="paystack-initialize",
+    ),
+    path(
+        "billing/paystack/webhook/",
+        PaystackWebhookView.as_view(),
+        name="paystack-webhook",
+    ),
 ]

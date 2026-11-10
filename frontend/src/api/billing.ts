@@ -431,3 +431,42 @@ export async function listArrears(
   })
   return readList(response, parseInvoice)
 }
+
+export async function startPaystackPayment(
+  workspaceId: string,
+  input: { invoice_id: string; channel: 'card' | 'mobile_money' },
+): Promise<{ authorization_url: string; reference: string }> {
+  const response = await request('/api/v1/billing/paystack/initialize/', {
+    method: 'POST',
+    workspaceId,
+    body: input,
+  })
+  const body = await readBody(response)
+  if (!isRecord(body) || typeof body.authorization_url !== 'string') {
+    throw new ApiError('The API returned an unexpected response.')
+  }
+  return {
+    authorization_url: body.authorization_url,
+    reference: typeof body.reference === 'string' ? body.reference : '',
+  }
+}
+
+export async function generateRecurringInvoices(
+  workspaceId: string,
+  input: { as_of: string; dry_run: boolean },
+): Promise<{ created_count: number; dry_run: boolean; detail: string }> {
+  const response = await request('/api/v1/billing/recurring/', {
+    method: 'POST',
+    workspaceId,
+    body: input,
+  })
+  const body = await readBody(response)
+  if (!isRecord(body)) {
+    throw new ApiError('The API returned an unexpected response.')
+  }
+  return {
+    created_count: typeof body.created_count === 'number' ? body.created_count : 0,
+    dry_run: body.dry_run === true,
+    detail: typeof body.detail === 'string' ? body.detail : '',
+  }
+}
