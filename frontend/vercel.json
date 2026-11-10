@@ -2,19 +2,23 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://RENDER_SERVICE_HOST/api/:path*"
+      "destination": "https://rentithq-api-ainr.onrender.com/api/:path*"
     },
     {
       "source": "/admin",
-      "destination": "https://RENDER_SERVICE_HOST/admin"
+      "destination": "https://rentithq-api-ainr.onrender.com/admin"
     },
     {
       "source": "/admin/:path*",
-      "destination": "https://RENDER_SERVICE_HOST/admin/:path*"
+      "destination": "https://rentithq-api-ainr.onrender.com/admin/:path*"
     },
     {
       "source": "/static/:path*",
-      "destination": "https://RENDER_SERVICE_HOST/static/:path*"
+      "destination": "https://rentithq-api-ainr.onrender.com/static/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
