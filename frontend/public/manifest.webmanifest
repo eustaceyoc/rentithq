@@ -1,0 +1,24 @@
+{
+  "name": "Rent It HQ",
+  "short_name": "Rent It HQ",
+  "description": "Rooms, rent, and repairs for independent hostel and apartment owners.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4ebdd",
+  "theme_color": "#1b1612",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

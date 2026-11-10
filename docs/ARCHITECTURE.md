@@ -121,3 +121,7 @@ The web build is Vite's `frontend/dist`. Django `collectstatic` is only for admi
 - Production web: static files from `npm run build`
 
 Gunicorn is a locked dependency. A production process was not deployed from this environment.
+
+## Phone web app
+
+The installable site is the phone client. A separate Android or iOS app is not in this repository. `frontend/public/manifest.webmanifest` and `frontend/public/sw.js` are served with the Vite build. The service worker cache is named `rentithq-shell-v1`. Bump that name to drop old files. It may store hashed files under `/assets/`, the icons, the favicon, and the manifest. It does not store `/api/` or `/admin`. Page navigations stay on the network, so a signed-in screen is not kept as an offline copy. Sign-out asks the worker to delete those caches. There is no offline write, no conflict handling, and no claim of full offline use. The worker is registered only in the production build. Chrome, Edge, Firefox, and Safari on a current phone can install it when the site is served over HTTPS. That install was not checked on a physical device.

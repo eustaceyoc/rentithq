@@ -205,6 +205,16 @@ h3.ant-typography {
   }
 }
 
+@media (max-width: 767px) {
+  .ant-btn {
+    min-height: 44px;
+  }
+
+  .ant-modal {
+    max-width: calc(100vw - 16px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ant-drawer-content-wrapper,
   .ant-modal,

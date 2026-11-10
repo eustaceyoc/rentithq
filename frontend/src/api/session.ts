@@ -1,4 +1,5 @@
 import { ApiError } from './client'
+import { clearInstalledCaches } from '../pwa/register'
 
 export type SessionUser = {
   id: string
@@ -343,6 +344,7 @@ export async function signOut(): Promise<void> {
   if (!response.ok && response.status !== 204) {
     throw await errorFromResponse(response)
   }
+  await clearInstalledCaches()
 }
 
 export async function createWorkspace(input: {
