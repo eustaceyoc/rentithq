@@ -1,0 +1,63 @@
+# Test site. Free web service and a free Postgres database.
+# The public hostname is whatever Render assigns. It is not written here.
+databases:
+  - name: rentithq-db
+    plan: free
+    region: frankfurt
+    databaseName: rentithq
+    user: rentithq
+    postgresMajorVersion: "16"
+    ipAllowList: []
+
+services:
+  - type: web
+    name: rentithq-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate --noinput
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120
+    healthCheckPath: /api/v1/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rentithq-db
+          property: connectionString
+      - key: DB_CONN_MAX_AGE
+        value: "0"
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: FRONTEND_BASE_URL
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: "Rent It HQ <noreply@rentithq.local>"
+      - key: DEMO_EMAIL
+        sync: false
+      - key: DEMO_PASSWORD
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: EMAIL_USE_TLS
+        value: "true"

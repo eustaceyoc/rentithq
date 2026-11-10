@@ -10,7 +10,10 @@ import pytest
 from django.core.exceptions import ImproperlyConfigured
 
 from config.database import postgres_config_from_url
-from config.environment import validate_production_environment
+from config.environment import (
+    mailers_from_environ,
+    validate_production_environment,
+)
 from config.storage import file_storage_config
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
@@ -67,6 +70,48 @@ def test_production_validator_rejects_debug_weak_secrets_and_wildcards() -> None
         validate_production_environment(
             {**base, "CSRF_TRUSTED_ORIGINS": "http://app.example.com"}
         )
+    with pytest.raises(ImproperlyConfigured):
+        validate_production_environment({**base, "DJANGO_ALLOWED_HOSTS": ""})
+
+    render_only = {**base, "DJANGO_ALLOWED_HOSTS": ""}
+    render_only["RENDER_EXTERNAL_HOSTNAME"] = "rentithq-api.onrender.com"
+    validate_production_environment(render_only)
+
+
+def test_mail_stays_on_the_console_until_smtp_is_configured() -> None:
+    console = mailers_from_environ({})
+    assert console["default"]["BACKEND"] == (
+        "django.core.mail.backends.console.EmailBackend"
+    )
+    smtp = mailers_from_environ(
+        {
+            "EMAIL_HOST": "smtp.example.test",
+            "EMAIL_PORT": "2525",
+            "EMAIL_HOST_USER": "mailer",
+            "EMAIL_HOST_PASSWORD": "from-the-environment",
+            "EMAIL_USE_TLS": "false",
+        }
+    )
+    options = smtp["default"]["OPTIONS"]
+    assert isinstance(options, dict)
+    assert smtp["default"]["BACKEND"] == ("django.core.mail.backends.smtp.EmailBackend")
+    assert options["host"] == "smtp.example.test"
+    assert options["port"] == 2525
+    assert options["use_tls"] is False
+
+
+def test_vercel_proxy_host_is_a_placeholder() -> None:
+    text = (BACKEND_ROOT.parent / "frontend" / "vercel.json").read_text()
+    assert text.count("RENDER_SERVICE_HOST") == 4
+    assert "onrender.com" not in text
+    assert "/api/:path*" in text
+    assert "/admin/:path*" in text
+    assert "/static/:path*" in text
+    blueprint = (BACKEND_ROOT.parent / "render.yaml").read_text()
+    assert "preDeployCommand: python manage.py migrate --noinput" in blueprint
+    assert "healthCheckPath: /api/v1/health/" in blueprint
+    assert "DEMO_PASSWORD" in blueprint
+    assert "sk_live_" not in blueprint
 
 
 def test_production_settings_module_rejects_a_weak_secret() -> None:

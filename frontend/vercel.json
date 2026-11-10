@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://RENDER_SERVICE_HOST/api/:path*"
+    },
+    {
+      "source": "/admin",
+      "destination": "https://RENDER_SERVICE_HOST/admin"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "https://RENDER_SERVICE_HOST/admin/:path*"
+    },
+    {
+      "source": "/static/:path*",
+      "destination": "https://RENDER_SERVICE_HOST/static/:path*"
+    }
+  ]
+}

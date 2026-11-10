@@ -45,9 +45,52 @@ def read_non_negative_int(environ: Mapping[str, str], key: str, *, default: int)
     return value
 
 
+def production_allowed_hosts(environ: Mapping[str, str]) -> list[str]:
+    """Hosts from the environment, plus the Render service host when present."""
+    hosts = split_csv(environ.get("DJANGO_ALLOWED_HOSTS", ""))
+    render_host = environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
+    if render_host and render_host not in hosts:
+        hosts.append(render_host)
+    return hosts
+
+
+def production_csrf_origins(environ: Mapping[str, str]) -> list[str]:
+    """HTTPS origins from the environment, plus the Render service origin."""
+    origins = split_csv(environ.get("CSRF_TRUSTED_ORIGINS", ""))
+    render_host = environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
+    if render_host:
+        origin = f"https://{render_host}"
+        if origin not in origins:
+            origins.append(origin)
+    return origins
+
+
+def mailers_from_environ(environ: Mapping[str, str]) -> dict[str, dict[str, object]]:
+    """Console mail unless EMAIL_HOST is set. The password stays in the environment."""
+    host = environ.get("EMAIL_HOST", "").strip()
+    if not host:
+        return {
+            "default": {
+                "BACKEND": "django.core.mail.backends.console.EmailBackend",
+            }
+        }
+    return {
+        "default": {
+            "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+            "OPTIONS": {
+                "host": host,
+                "port": read_non_negative_int(environ, "EMAIL_PORT", default=587),
+                "username": environ.get("EMAIL_HOST_USER", "").strip(),
+                "password": environ.get("EMAIL_HOST_PASSWORD", ""),
+                "use_tls": read_bool(environ, "EMAIL_USE_TLS", default=True),
+            },
+        }
+    }
+
+
 def validate_production_environment(environ: Mapping[str, str]) -> None:
     """Fail closed when production is missing a secret or would run in debug."""
-    required = ("DJANGO_SECRET_KEY", "DJANGO_ALLOWED_HOSTS", "DATABASE_URL")
+    required = ("DJANGO_SECRET_KEY", "DATABASE_URL")
     missing = [key for key in required if not environ.get(key, "").strip()]
     if missing:
         raise ImproperlyConfigured(
@@ -68,7 +111,7 @@ def validate_production_environment(environ: Mapping[str, str]) -> None:
             "DJANGO_SECRET_KEY is not strong enough for production."
         )
 
-    hosts = split_csv(environ["DJANGO_ALLOWED_HOSTS"])
+    hosts = production_allowed_hosts(environ)
     if not hosts or any(host == "*" for host in hosts):
         raise ImproperlyConfigured(
             "DJANGO_ALLOWED_HOSTS must list explicit host names."
@@ -80,7 +123,7 @@ def validate_production_environment(environ: Mapping[str, str]) -> None:
             "DATABASE_URL must be a PostgreSQL URL in production."
         )
 
-    for origin in split_csv(environ.get("CSRF_TRUSTED_ORIGINS", "")):
+    for origin in production_csrf_origins(environ):
         if not origin.startswith("https://"):
             raise ImproperlyConfigured(
                 "CSRF_TRUSTED_ORIGINS entries must use https in production."
