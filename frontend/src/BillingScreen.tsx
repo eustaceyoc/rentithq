@@ -982,10 +982,13 @@ function ArrearsList({ workspaceId }: { workspaceId: string }) {
 }
 
 function ResidentBilling({ workspaceId }: { workspaceId: string }) {
-  const { invoices, payments, message } = useBillingLists(workspaceId, false, true)
+  const { invoices, payments, message, reload } = useBillingLists(workspaceId, false, true)
   const [printId, setPrintId] = useState<string | null>(null)
   const [printToken, setPrintToken] = useState(0)
   const [payNote, setPayNote] = useState<string | null>(null)
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
+  const [starting, setStarting] = useState(false)
+  const [channel, setChannel] = useState<'card' | 'mobile_money'>('mobile_money')
 
   useEffect(() => {
     if (printToken === 0) {
@@ -996,25 +999,33 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
 
   async function pay(invoiceId: string, reference: string) {
     setPayNote(null)
+    setCheckoutUrl(null)
+    setStarting(true)
     try {
       const started = await startPaystackPayment(workspaceId, {
         invoice_id: invoiceId,
-        channel: 'mobile_money',
+        channel,
       })
+      setCheckoutUrl(started.authorization_url)
       setPayNote(
-        `Continue to Paystack for ${reference}. The payment is recorded only after Paystack notifies Rent It HQ. ${started.authorization_url}`,
+        `Continue to Paystack for ${reference}. The payment is recorded only after Paystack notifies Rent It HQ.`,
       )
     } catch (error: unknown) {
       setPayNote(errorText(error))
+    } finally {
+      setStarting(false)
     }
   }
 
   return (
     <section>
       <PageHeader
-        title="Your invoices"
-        description="You can see your own invoices, payments, and receipts."
+        title="Invoices and payments"
+        description="You can see your own invoices, payments, and receipts. After checkout, return here and refresh to check for confirmation."
       />
+      <Button onClick={reload} style={{ marginBottom: 16 }}>
+        Refresh invoices and payments
+      </Button>
       {message ? (
         <Alert
           type="error"
@@ -1029,6 +1040,23 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
       {invoices && invoices.length === 0 ? (
         <Typography.Paragraph>No invoices are recorded for you yet.</Typography.Paragraph>
       ) : null}
+      <label>
+        Payment method{' '}
+        <select
+          value={channel}
+          disabled={starting}
+          onChange={(event) => {
+            if (event.target.value === 'card' || event.target.value === 'mobile_money') {
+              setChannel(event.target.value)
+              setCheckoutUrl(null)
+              setPayNote(null)
+            }
+          }}
+        >
+          <option value="mobile_money">Mobile money</option>
+          <option value="card">Card</option>
+        </select>
+      </label>
       {invoices?.map((invoice) => (
         <article
           key={invoice.id}
@@ -1048,10 +1076,11 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
           >
             Print invoice {invoice.reference}
           </Button>
-          {invoice.status === 'issued' ? (
+          {invoice.status === 'issued' && Number(invoice.outstanding_amount) > 0 ? (
             <Button
               className="no-print"
               style={{ marginLeft: 8 }}
+              disabled={starting}
               onClick={() => {
                 void pay(invoice.id, invoice.reference)
               }}
@@ -1062,6 +1091,11 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
         </article>
       ))}
       {payNote ? <Typography.Paragraph>{payNote}</Typography.Paragraph> : null}
+      {checkoutUrl ? (
+        <Button type="primary" href={checkoutUrl}>
+          Continue to Paystack checkout
+        </Button>
+      ) : null}
       <Typography.Title level={3} style={{ fontSize: '1.15rem' }}>
         Your payments
       </Typography.Title>

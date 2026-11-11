@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import json
 from datetime import UTC, date, datetime
+from io import BytesIO
 from typing import Any
 
 import pytest
@@ -15,7 +16,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from billing.models import Invoice, Payment
-from billing.paystack import signature_ok
+from billing.paystack import post_json, signature_ok
 from billing.phase02_models import PaymentAttempt, ProviderEvent, RecurringCharge
 from billing.recurrence import generate_for_workspace, workspace_today
 from notifications.models import Delivery
@@ -376,3 +377,30 @@ def test_overdue_notice_goes_only_to_that_resident() -> None:
     assert Delivery.objects.filter(workspace=elsewhere).count() == 0
     send_reminders(workspace, date(2026, 6, 11))
     assert len(mail.outbox) == 1
+
+
+@override_settings(PAYSTACK_SECRET_KEY=SECRET)
+def test_paystack_client_identifies_the_application(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def accept_request(request: Any, timeout: int) -> BytesIO:
+        assert request.full_url == "https://api.paystack.co/transaction/initialize"
+        assert request.get_header("User-agent") == (
+            "RentItHQ/1.0 (+https://rentithq.vercel.app)"
+        )
+        assert request.get_header("Accept") == "application/json"
+        assert request.get_header("Authorization") == f"Bearer {SECRET}"
+        assert json.loads(request.data) == {"amount": 75000, "currency": "GHS"}
+        assert timeout == 20
+        return BytesIO(
+            json.dumps(
+                {
+                    "status": True,
+                    "data": {"authorization_url": "https://checkout.paystack.com/test"},
+                }
+            ).encode()
+        )
+
+    monkeypatch.setattr("urllib.request.urlopen", accept_request)
+    result = post_json("/transaction/initialize", {"amount": 75000, "currency": "GHS"})
+    assert result["status"] is True

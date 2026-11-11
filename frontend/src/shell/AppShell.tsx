@@ -43,7 +43,7 @@ function navFor(role: string): NavItem[] {
     })
   }
   items.push(
-    { to: '/app/billing', label: 'Billing', icon: <DollarOutlined /> },
+    { to: '/app/billing', label: resident ? 'Invoices and payments' : 'Billing', icon: <DollarOutlined /> },
     { to: '/app/maintenance', label: 'Maintenance', icon: <ToolOutlined /> },
   )
   if (!resident) {

@@ -339,6 +339,7 @@ describe('Workspace home', () => {
     expect(await screen.findByRole('heading', { name: 'Your workspace' })).toBeInTheDocument()
     expect(screen.queryByText('Harbour House')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }))
+    expect(screen.getByRole('link', { name: 'Invoices and payments' })).toHaveAttribute('href', '/app/billing')
     fireEvent.click(await screen.findByRole('link', { name: 'Your stay' }))
     expect(await screen.findByText(/No stay is recorded for you yet/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Add resident' })).not.toBeInTheDocument()

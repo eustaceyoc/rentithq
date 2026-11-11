@@ -72,6 +72,8 @@ def post_json(path: str, payload: dict[str, Any]) -> dict[str, Any]:
         headers={
             "Authorization": f"Bearer {secret}",
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "RentItHQ/1.0 (+https://rentithq.vercel.app)",
         },
         method="POST",
     )
@@ -79,7 +81,11 @@ def post_json(path: str, payload: dict[str, Any]) -> dict[str, Any]:
         with urllib.request.urlopen(request, timeout=20) as response:
             parsed = json.loads(response.read().decode())
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        logger.info("paystack initialize failed %s", type(exc).__name__)
+        logger.info(
+            "paystack initialize failed type=%s status=%s",
+            type(exc).__name__,
+            getattr(exc, "code", None),
+        )
         raise PaystackError("Paystack did not accept the charge.") from exc
     if not isinstance(parsed, dict):
         raise PaystackError("Paystack did not accept the charge.")
