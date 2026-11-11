@@ -6,7 +6,8 @@ from organizations.demo_seed import seed_demo
 class Command(BaseCommand):
     help = (
         "Create a DEMO workspace with sample properties and residents. "
-        "Safe to run again. DEMO_EMAIL and DEMO_PASSWORD come from the environment."
+        "Safe to run again. DEMO_EMAIL and DEMO_PASSWORD come from the environment. "
+        "DEMO_RESIDENT_PASSWORD is optional and is the payer sign-in."
     )
 
     def handle(self, *args: object, **options: object) -> None:
