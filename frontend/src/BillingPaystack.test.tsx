@@ -1,4 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render as rtlRender, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import type { ReactElement } from 'react'
+
+function render(ui: ReactElement) {
+  return rtlRender(<MemoryRouter>{ui}</MemoryRouter>)
+}
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BillingScreen } from './BillingScreen'
 import { resetApiState } from './api/session'

@@ -1,5 +1,6 @@
 import { Alert, Button, Checkbox, Empty, Form, Input, Select, Table, Typography } from 'antd'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   allocatePayment,
   createInvoice,
@@ -20,8 +21,10 @@ import { listResidents, listTenancies, type ResidentRecord, type TenancyRecord }
 import { errorText } from './api/session'
 import { useCatalogRevision } from './catalog'
 import { formatMoney } from './money'
+import { MethodLabel } from './ui/MethodLabel'
 import { PageHeader } from './ui/PageHeader'
-import { StatusTag } from './ui/StatusTag'
+import { SectionSwitch } from './ui/SectionSwitch'
+import { MoneyTag, StatusTag } from './ui/StatusTag'
 
 const SECTIONS = [
   { id: 'invoices', label: 'Invoices' },
@@ -392,7 +395,7 @@ function InvoiceList({
           {
             title: 'Status',
             dataIndex: 'status',
-            render: (status: string) => <StatusTag value={status} />,
+            render: (_status: string, invoice) => <MoneyTag invoice={invoice} />,
           },
           { title: 'Issued', dataIndex: 'issued_on' },
           { title: 'Due', dataIndex: 'due_on' },
@@ -788,7 +791,15 @@ function PaymentCards({
           },
           {
             title: 'Amount',
-            render: (_value, payment) => money(payment.amount, payment.currency_code),
+            align: 'right',
+            render: (_value, payment) => (
+              <span className="money">{money(payment.amount, payment.currency_code)}</span>
+            ),
+          },
+          {
+            title: 'Method',
+            dataIndex: 'method',
+            render: (method: string) => <MethodLabel method={method} />,
           },
           {
             title: 'Status',
@@ -972,7 +983,7 @@ function ArrearsList({ workspaceId }: { workspaceId: string }) {
             {
               title: 'Status',
               dataIndex: 'status',
-              render: (status: string) => <StatusTag value={status} />,
+              render: (_status: string, invoice) => <MoneyTag invoice={invoice} />,
             },
           ]}
         />
@@ -1131,7 +1142,12 @@ export function BillingScreen({
   workspaceId: string
   role: string
 }) {
-  const [section, setSection] = useState<SectionId>('invoices')
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('section')
+  const section: SectionId =
+    requested === 'payments' || requested === 'arrears' || requested === 'invoices'
+      ? requested
+      : 'invoices'
   const [actionError, setActionError] = useState<string | null>(null)
   const [printId, setPrintId] = useState<string | null>(null)
   const [printToken, setPrintToken] = useState(0)
@@ -1183,20 +1199,14 @@ export function BillingScreen({
           description="Recording money stays with the owner and finance."
         />
       ) : null}
-      <div className="section-switch">
-        {SECTIONS.map((item) => (
-          <Button
-            key={item.id}
-            type={section === item.id ? 'primary' : 'default'}
-            onClick={() => {
-              setSection(item.id)
-              setActionError(null)
-            }}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
+      <SectionSwitch
+        items={SECTIONS}
+        value={section}
+        onChange={(id) => {
+          setParams({ section: id })
+          setActionError(null)
+        }}
+      />
       {lists.message ? (
         <>
           <Alert

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ProductWindow } from './ProductWindow'
 
 const NAV = [
-  { href: '#house', label: 'The house' },
-  { href: '#ledger', label: 'The ledger' },
-  { href: '#repairs', label: 'Repairs' },
-  { href: '#questions', label: 'Questions' },
+  { href: '#properties', label: 'Properties' },
+  { href: '#people', label: 'Residents' },
+  { href: '#ledger', label: 'Billing' },
+  { href: '#repairs', label: 'Maintenance' },
+  { href: '#reports', label: 'Reports' },
 ]
 
 export function LandingHeader() {
@@ -67,13 +67,13 @@ export function LandingHeader() {
 export function LandingHero() {
   return (
     <section className="hero" id="house">
-      <p className="eyebrow">For independent hostel and apartment owners</p>
+      <p className="eyebrow">Property management for hostels and apartments</p>
       <div className="hero-grid">
-        <h1>Rooms, rent, and repairs in one place.</h1>
+        <h1>One workspace for the house, the rent, and the repairs.</h1>
         <div>
           <p className="lede">
-            See who is in, who has paid, and what still needs fixing. One workspace holds the
-            properties, the stays, the invoices, and the repair requests.
+            Rent It HQ is the desk your staff work from. Properties, rooms, residents, bookings,
+            invoices, and maintenance stay in the same place. It is not a public listing site.
           </p>
           <div className="hero-actions">
             <Link className="btn btn-primary" to="/login?mode=register">
@@ -85,52 +85,10 @@ export function LandingHero() {
           </div>
         </div>
       </div>
-      <ProductWindow
-        workspace="Harbour House"
-        active="Dashboard"
-        label="Sample dashboard. These figures are an example screen, not a customer result."
-      >
-        <p className="mock-title">Dashboard</p>
-        <div className="mock-kpis">
-          <div>
-            <small>Rooms occupied</small>
-            <b>1</b>
-            <small>2 free</small>
-          </div>
-          <div>
-            <small>Outstanding</small>
-            <b>50.00</b>
-            <small>GHS due</small>
-          </div>
-          <div>
-            <small>Collected</small>
-            <b>30.00</b>
-            <small>GHS this month</small>
-          </div>
-          <div>
-            <small>Open maintenance</small>
-            <b>1</b>
-            <small>Not finished</small>
-          </div>
-        </div>
-        <table className="mock-table">
-          <caption>Upcoming move-outs</caption>
-          <thead>
-            <tr>
-              <th>Resident</th>
-              <th>Place</th>
-              <th>Last day</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Ama Mensah</td>
-              <td>Room 12</td>
-              <td>30 Jun</td>
-            </tr>
-          </tbody>
-        </table>
-      </ProductWindow>
+      <figure className="product-shot">
+        <img src="/product/dashboard.png" alt="The Rent It HQ dashboard for a demo workspace, showing occupancy, outstanding rent, and upcoming move-outs." />
+        <figcaption>The dashboard in a demo workspace. These figures are sample records, not a customer result.</figcaption>
+      </figure>
     </section>
   )
 }
@@ -157,106 +115,62 @@ export function BuiltFor() {
 }
 
 export function FeatureShows() {
+  const shots = [
+    {
+      id: 'properties',
+      kicker: 'Properties and rooms',
+      title: 'Each building, then the rooms and beds inside it',
+      text: 'A property holds optional buildings and floors. Rooms can have beds. A whole unit does not. Mark a space unavailable when it cannot be let.',
+      src: '/product/properties.png',
+      alt: 'The properties screen listing Harbour House and Ridge Court.',
+    },
+    {
+      id: 'people',
+      kicker: 'Residents and bookings',
+      title: 'Who is in, and which bed is held',
+      text: 'Residents, reservations, and tenancies live on the same desk. The end date is the last occupied day. The space is free the next day.',
+      src: '/product/residents.png',
+      alt: 'The residents screen in the demo workspace.',
+    },
+    {
+      id: 'ledger',
+      kicker: 'Billing and payments',
+      title: 'Invoices you can read, and payments you record',
+      text: 'Issue an invoice, then record cash, a bank transfer, mobile money, or a card payment. Recording it does not charge a phone or a card. A resident can start a Paystack test checkout from their own invoice.',
+      src: '/product/invoices.png',
+      alt: 'Invoices marked paid, overdue, and outstanding, in Ghana cedis.',
+    },
+    {
+      id: 'repairs',
+      kicker: 'Maintenance',
+      title: 'Repairs that stay on the list',
+      text: 'File a request, set the priority, and assign it. The history of each status stays with the request. A request does not block the space.',
+      src: '/product/maintenance.png',
+      alt: 'The maintenance list with priority and status.',
+    },
+    {
+      id: 'reports',
+      kicker: 'Reports',
+      title: 'Occupancy, arrears, and what was collected',
+      text: 'Reports use the same records the staff can already open. Download the same view as a spreadsheet.',
+      src: '/product/reports.png',
+      alt: 'The reports screen with occupancy and a CSV download.',
+    },
+  ]
   return (
     <>
-      <section className="split" id="ledger">
-        <div className="split-copy">
-          <p className="kicker">Residents</p>
-          <h2>Who is in, and which bed is free</h2>
-          <p>
-            Record each property, then rooms, whole units, or beds. A reservation blocks that
-            space until the last occupied day. The next day it is free.
-          </p>
-        </div>
-        <ProductWindow workspace="Harbour House" active="Residents" label="Sample resident list.">
-          <p className="mock-title">Residents</p>
-          <table className="mock-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Place</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Ama Mensah</td>
-                <td>Room 12</td>
-                <td>Active</td>
-              </tr>
-              <tr>
-                <td>Kojo Boateng</td>
-                <td>Bed A</td>
-                <td>Confirmed</td>
-              </tr>
-            </tbody>
-          </table>
-        </ProductWindow>
-      </section>
-      <section className="sand">
-        <div className="sand-inner">
-          <p className="pull">
-            Issue an invoice, then record cash, mobile money, or a card payment against it.
-            Recording the payment does not charge a phone or a card.
-          </p>
-          <table className="ledger-table">
-            <caption>Sample invoice list. Recording a payment does not charge the resident.</caption>
-            <thead>
-              <tr>
-                <th>Invoice</th>
-                <th>Status</th>
-                <th>Outstanding</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>INV-0001 · Ama Mensah</td>
-                <td>Issued</td>
-                <td>50.00 GHS</td>
-              </tr>
-              <tr>
-                <td>Receipt PAY-0001</td>
-                <td>Recorded</td>
-                <td>30.00 GHS</td>
-              </tr>
-            </tbody>
-          </table>
-          <ul className="quiet-points">
-            <li>Invoices, allocations, refunds, and voids</li>
-            <li>A receipt you can print</li>
-            <li>Arrears for a date you choose</li>
-          </ul>
-        </div>
-      </section>
-      <section className="repairs" id="repairs">
-        <div>
-          <p className="kicker">Maintenance</p>
-          <h2>Repairs that stay on the list</h2>
-          <p>
-            File a request for a property, room, or bed. Assign it, change the status, and keep
-            the note. A request does not block the space. Reports cover occupancy, collections,
-            arrears, and open work.
-          </p>
-        </div>
-        <dl className="repair-sheet">
-          <div>
-            <dt>Request</dt>
-            <dd>MNT-0001 · The tap drips.</dd>
+      {shots.map((shot) => (
+        <section className="split" id={shot.id} key={shot.id}>
+          <div className="split-copy">
+            <p className="kicker">{shot.kicker}</p>
+            <h2>{shot.title}</h2>
+            <p>{shot.text}</p>
           </div>
-          <div>
-            <dt>Priority</dt>
-            <dd>High</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>Open</dd>
-          </div>
-          <div>
-            <dt>Who can file</dt>
-            <dd>Staff, and a resident for their own stay.</dd>
-          </div>
-        </dl>
-      </section>
+          <figure className="product-shot">
+            <img src={shot.src} alt={shot.alt} />
+          </figure>
+        </section>
+      ))}
     </>
   )
 }
@@ -285,9 +199,9 @@ export function HowItWorks() {
 
 export function ComingSoon() {
   const items = [
-    'Paystack mobile money and card payments that charge the resident',
-    'Automatic monthly invoices',
-    'Email and SMS reminders',
+    'SMS notices. Email is the notice that can send today.',
+    'Android and iOS store apps.',
+    'A clock for recurring invoices. Staff can run the command; nothing in the app starts it by itself.',
   ]
   return (
     <section className="soon" aria-labelledby="soon-title">
@@ -297,8 +211,9 @@ export function ComingSoon() {
       </div>
       <div>
         <p>
-          Today you record a payment after it has happened. These three are named so they are not
-          mistaken for something the workspace already does.
+          Staff still record cash and transfers by hand. A resident can start a Paystack test
+          checkout on their own invoice. These three are named so they are not mistaken for
+          something the workspace already does.
         </p>
         <ul>
           {items.map((item) => (
@@ -352,7 +267,7 @@ export function LandingFooter() {
     <footer className="site-footer">
       <p>
         <strong>Rent It HQ</strong>
-        Rooms, rent, and repairs for independent hostel and apartment owners.
+        Property management for independent hostel and apartment owners.
       </p>
       <nav aria-label="Footer">
         <a href="#house">The house</a>

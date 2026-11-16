@@ -54,7 +54,9 @@ describe('API connection screen', () => {
     expect(screen.getByText('Checking the API…')).toBeInTheDocument()
     render(<App />)
     expect(
-      screen.getByRole('heading', { name: 'Rooms, rent, and repairs in one place.' }),
+      screen.getByRole('heading', {
+        name: 'One workspace for the house, the rent, and the repairs.',
+      }),
     ).toBeInTheDocument()
   })
 

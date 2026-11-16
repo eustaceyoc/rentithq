@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-const NAV = ['Dashboard', 'Properties', 'Residents', 'Billing', 'Maintenance', 'Reports']
+const NAV = ['Dashboard', 'Properties', 'Residents', 'Invoices', 'Maintenance', 'Reports']
 
 export function ProductWindow({
   workspace,

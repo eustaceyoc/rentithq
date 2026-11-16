@@ -83,10 +83,8 @@ export function LoginPage() {
     <ConfigProvider theme={theme}>
       <main className="auth-frame">
         <Card>
-          <Typography.Title level={1} style={{ marginTop: 0, fontSize: '1.7rem' }}>
-            Rent It HQ
-          </Typography.Title>
-          <Typography.Title level={2} style={{ marginTop: 0, fontSize: '1.5rem' }}>
+          <p className="page-title">Rent It HQ</p>
+          <Typography.Title level={2} style={{ marginTop: 8 }}>
             {mode === 'sign-in' ? 'Sign in' : 'Create an account'}
           </Typography.Title>
           <Typography.Paragraph>

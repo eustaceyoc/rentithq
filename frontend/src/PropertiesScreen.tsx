@@ -7,12 +7,14 @@ import {
   Modal,
   Popconfirm,
   Select,
-  Table,
   Typography,
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { notifyCatalogChanged } from './catalog'
+import { ActionMenu } from './ui/ActionMenu'
+import { DataTable } from './ui/DataTable'
 import { PageHeader } from './ui/PageHeader'
+import { StatusTag } from './ui/StatusTag'
 import {
   createBed,
   createBuilding,
@@ -85,6 +87,16 @@ function availabilityValue(record: {
 
 function kindLabel(kind: SpaceKind): string {
   return kind === 'unit' ? 'Whole unit' : 'Room'
+}
+
+function spaceState(space: SpaceRecord): string {
+  if (space.availability === 'unavailable') {
+    return 'unavailable'
+  }
+  if (space.availability === 'inactive') {
+    return 'inactive'
+  }
+  return 'active'
 }
 
 function StatusSelect({
@@ -357,7 +369,7 @@ function PropertyDetail({
               ))}
             </ul>
           ) : null}
-          <Typography.Title level={4} style={{ fontSize: '1.05rem' }}>
+          <Typography.Title id="rooms" level={4} style={{ fontSize: '1.05rem' }}>
             Rooms and whole units
           </Typography.Title>
           {spaces.length === 0 ? (
@@ -365,59 +377,82 @@ function PropertyDetail({
               No rooms or whole units yet. A whole unit does not need a bed.
             </Typography.Paragraph>
           ) : (
-            <ul style={{ paddingInlineStart: 0, listStyle: 'none' }}>
-              {spaces.map((space) => (
-                <li key={space.id} style={{ marginBottom: 12 }}>
-                  <Button
-                    onClick={() => {
-                      setOpenSpaceId(space.id)
-                    }}
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      whiteSpace: 'normal',
-                      textAlign: 'left',
-                    }}
-                  >
-                    {space.name} · {kindLabel(space.kind)}
-                  </Button>
-                  {canManage ? (
-                    <StatusSelect
-                      label={`Availability for ${space.name}`}
-                      record={space}
-                      onChange={(value) => {
-                        void handleAvailability(space, value)
-                      }}
-                    />
-                  ) : (
-                    <Typography.Paragraph style={{ marginBottom: 0 }}>
-                      {AVAILABILITY_OPTIONS.find(
-                        (option) => option.value === availabilityValue(space),
-                      )?.label ?? 'Active'}
-                    </Typography.Paragraph>
-                  )}
-                  {space.kind === 'unit' ? (
-                    <Typography.Paragraph style={{ marginBottom: 0 }}>
-                      Beds are not required for a whole unit.
-                    </Typography.Paragraph>
-                  ) : null}
-                  {canManage ? (
-                    <Popconfirm
-                      title={`Remove ${space.name}?`}
-                      okText="Remove"
-                      cancelText="Cancel"
-                      onConfirm={() => {
-                        void handleDeleteSpace(space.id)
+            <DataTable
+              rowKey="id"
+              dataSource={spaces}
+              columns={[
+                {
+                  title: 'Name',
+                  render: (_value, space) => (
+                    <Button
+                      type="link"
+                      onClick={() => {
+                        setOpenSpaceId(space.id)
                       }}
                     >
-                      <Button danger size="small" style={{ marginTop: 8 }}>
-                        Remove {space.name}
-                      </Button>
-                    </Popconfirm>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+                      {space.name} · {kindLabel(space.kind)}
+                    </Button>
+                  ),
+                },
+                {
+                  title: 'Kind',
+                  dataIndex: 'kind',
+                  render: (value: string) => kindLabel(value as SpaceKind),
+                },
+                {
+                  title: 'State',
+                  render: (_value, space) => (
+                    <StatusTag value={spaceState(space)} />
+                  ),
+                },
+                {
+                  title: 'Availability',
+                  render: (_value, space) =>
+                    canManage ? (
+                      <StatusSelect
+                        label={`Availability for ${space.name}`}
+                        record={space}
+                        onChange={(value) => {
+                          void handleAvailability(space, value)
+                        }}
+                      />
+                    ) : (
+                      AVAILABILITY_OPTIONS.find(
+                        (option) => option.value === availabilityValue(space),
+                      )?.label ?? 'Active'
+                    ),
+                },
+                {
+                  title: '',
+                  key: 'actions',
+                  align: 'right',
+                  render: (_value, space) => (
+                    <ActionMenu
+                      label={`Actions for ${space.name}`}
+                      items={[
+                        {
+                          key: 'open',
+                          label: `Open ${space.name}`,
+                          onClick: () => setOpenSpaceId(space.id),
+                        },
+                        ...(canManage
+                          ? [
+                              {
+                                key: 'remove',
+                                label: `Remove ${space.name}`,
+                                danger: true,
+                                onClick: () => {
+                                  void handleDeleteSpace(space.id)
+                                },
+                              },
+                            ]
+                          : []),
+                      ]}
+                    />
+                  ),
+                },
+              ]}
+            />
           )}
           {canManage ? (
             <>
@@ -914,13 +949,9 @@ export function PropertiesScreen({
         <Empty description="No properties yet. Add a property when you are ready to record its rooms or whole units. Buildings and floors are optional, and a whole unit does not need a bed." />
       ) : null}
       {properties && !open && properties.length > 0 ? (
-        <Table
-          className="data-table"
+        <DataTable
           rowKey="id"
-          pagination={false}
           dataSource={properties}
-          scroll={{ x: 'max-content' }}
-          style={{ marginBottom: 16 }}
           columns={[
             { title: 'Property', dataIndex: 'name' },
             {
@@ -931,6 +962,7 @@ export function PropertiesScreen({
             {
               title: '',
               key: 'open',
+              align: 'right',
               render: (_value, property) => (
                 <Button
                   type="link"

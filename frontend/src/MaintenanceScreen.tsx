@@ -12,6 +12,7 @@ import { errorText, listMembers, type Member } from './api/session'
 import { useCatalogRevision } from './catalog'
 import { formatMoney } from './money'
 import { PageHeader } from './ui/PageHeader'
+import { SectionSwitch } from './ui/SectionSwitch'
 import { StatusTag } from './ui/StatusTag'
 
 const PRIORITIES = [
@@ -76,6 +77,7 @@ export function MaintenanceScreen({
   const [attempt, setAttempt] = useState(0)
   const [propertyId, setPropertyId] = useState<string | undefined>()
   const [spaceId, setSpaceId] = useState<string | undefined>()
+  const [focus, setFocus] = useState<'all' | 'open' | 'urgent'>('all')
   const catalogRevision = useCatalogRevision()
 
   useEffect(() => {
@@ -202,6 +204,22 @@ export function MaintenanceScreen({
   const assignable = members.filter((member) =>
     ['owner', 'property_manager', 'maintenance'].includes(member.role),
   )
+  const visible = (requests ?? [])
+    .filter((row) => {
+      if (focus === 'urgent') {
+        return row.priority === 'urgent' || row.priority === 'high'
+      }
+      if (focus === 'open') {
+        return row.status !== 'completed' && row.status !== 'cancelled'
+      }
+      return true
+    })
+    .slice()
+    .sort((left, right) => {
+      const weight = (status: string) =>
+        status === 'completed' || status === 'cancelled' ? 1 : 0
+      return weight(left.status) - weight(right.status)
+    })
   const stayPlaces = assignments.filter(
     (row) => row.status === 'confirmed' || row.status === 'active',
   )
@@ -346,12 +364,22 @@ export function MaintenanceScreen({
         </Form>
       ) : null}
       {requests && requests.length > 0 ? (
+        <>
+        <SectionSwitch
+          items={[
+            { id: 'all', label: 'All' },
+            { id: 'open', label: 'Unresolved' },
+            { id: 'urgent', label: 'Urgent' },
+          ]}
+          value={focus}
+          onChange={setFocus}
+        />
         <Table
           className="data-table"
           style={{ marginTop: 16 }}
           rowKey="id"
           pagination={false}
-          dataSource={requests}
+          dataSource={visible}
           scroll={{ x: 'max-content' }}
           columns={[
             {
@@ -384,14 +412,23 @@ export function MaintenanceScreen({
               ),
             },
             {
+              title: 'Priority',
+              render: (_value, row) => <StatusTag value={row.priority} />,
+            },
+            {
               title: 'Status',
               render: (_value, row) => <StatusTag value={row.status} />,
+            },
+            {
+              title: 'Assignee',
+              dataIndex: 'assignee_email',
+              render: (value: string) => value || 'Unassigned',
             },
             { title: 'Description', dataIndex: 'description' },
             {
               title: 'Updates',
               render: (_value, row) => (
-                <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                <ol className="activity">
                   {row.updates.map((update) => (
                     <li key={update.id}>
                       {update.status_before ? `${update.status_before} → ` : ''}
@@ -399,14 +436,15 @@ export function MaintenanceScreen({
                       {update.note ? `. ${update.note}` : ''}
                     </li>
                   ))}
-                </ul>
+                </ol>
               ),
             },
           ]}
         />
+        </>
       ) : null}
       {canUpdate
-        ? requests?.map((row) => (
+        ? visible.map((row) => (
             <Form<UpdateValues>
               key={row.id}
               className="form-panel"

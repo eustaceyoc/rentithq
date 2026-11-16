@@ -12,8 +12,10 @@ import {
   Typography,
 } from 'antd'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { notifyCatalogChanged, useCatalogRevision } from './catalog'
 import { PageHeader } from './ui/PageHeader'
+import { SectionSwitch } from './ui/SectionSwitch'
 import { StatusTag } from './ui/StatusTag'
 import {
   listBeds,
@@ -316,7 +318,16 @@ export function OccupancyScreen({
   showSections?: boolean
   heading?: string
 }) {
-  const [section, setSection] = useState<SectionId>(initialSection)
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('section')
+  const section: SectionId =
+    requested === 'residents' ||
+    requested === 'bookings' ||
+    requested === 'tenancies' ||
+    requested === 'stays' ||
+    requested === 'availability'
+      ? requested
+      : initialSection
   const [reloadKey, setReloadKey] = useState(0)
   const manage = canManage(role)
 
@@ -340,19 +351,13 @@ export function OccupancyScreen({
         />
       ) : null}
       {showSections ? (
-      <div className="section-switch">
-        {SECTIONS.map((item) => (
-          <Button
-            key={item.id}
-            type={section === item.id ? 'primary' : 'default'}
-            onClick={() => {
-              setSection(item.id)
-            }}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
+        <SectionSwitch
+          items={SECTIONS}
+          value={section}
+          onChange={(id) => {
+            setParams({ section: id })
+          }}
+        />
       ) : null}
       {section === 'residents' ? (
         <ResidentsPanel

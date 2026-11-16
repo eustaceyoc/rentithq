@@ -37,8 +37,8 @@
   --cream-deep: #e4d5c0;
   --paper: #fbf6ee;
   --surface: #fff9f1;
-  --clay: #8f4328;
-  --clay-hover: #732f1c;
+  --clay: #b4532a;
+  --clay-hover: #8a3418;
   --amber: #d3922a;
   --text: #1b1612;
   --text-secondary: #53463c;
@@ -64,8 +64,8 @@
   --space-6: 32px;
   --space-7: 48px;
   --space-8: 80px;
-  --radius-control: 6px;
-  --radius-card: 8px;
+  --radius-control: 2px;
+  --radius-card: 2px;
   --shadow-window: 0 18px 40px rgba(27, 22, 18, 0.08);
   --control-height: 40px;
   color-scheme: light;

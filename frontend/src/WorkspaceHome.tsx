@@ -293,7 +293,7 @@ function WorkspacePanel({
       <div className="form-panel" style={{ marginTop: 0, marginBottom: 24 }}>
         <ChangePasswordForm />
       </div>
-      <Card title="People">
+      <Card id="team" title="People">
           {membership.role === 'resident' ? (
             <Typography.Paragraph>
               You can see your own membership. Workspace settings stay with the owner.

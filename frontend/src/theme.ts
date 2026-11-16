@@ -3,8 +3,8 @@ import type { ThemeConfig } from 'antd'
 export const theme: ThemeConfig = {
   token: {
     colorPrimary: '#1b1612',
-    colorInfo: '#8f4328',
-    colorLink: '#8f4328',
+    colorInfo: '#b4532a',
+    colorLink: '#8a3418',
     colorSuccess: '#216846',
     colorWarning: '#9a6412',
     colorError: '#9e342e',
@@ -18,7 +18,7 @@ export const theme: ThemeConfig = {
     colorPrimaryActive: '#1b1612',
     controlOutline: 'rgba(143, 67, 40, 0.35)',
     controlOutlineWidth: 3,
-    borderRadius: 6,
+    borderRadius: 2,
     fontFamily: "'Atkinson Hyperlegible', system-ui, sans-serif",
     fontSize: 15,
     controlHeight: 40,
@@ -26,9 +26,53 @@ export const theme: ThemeConfig = {
   components: {
     Layout: {
       siderBg: '#1b1612',
+      triggerBg: '#1b1612',
+      triggerColor: '#f8e7c4',
       headerBg: '#fff9f1',
       bodyBg: '#f4ebdd',
       headerHeight: 64,
+      headerPadding: '0 16px',
+    },
+    Card: {
+      borderRadiusLG: 2,
+    },
+    Button: {
+      primaryShadow: 'none',
+      defaultShadow: 'none',
+      dangerShadow: 'none',
+      fontWeight: 600,
+    },
+    Input: {
+      activeBorderColor: '#1b1612',
+      hoverBorderColor: '#8a3418',
+    },
+    Select: {
+      optionSelectedBg: '#f4ebdd',
+    },
+    Pagination: {
+      itemActiveBg: '#1b1612',
+    },
+    Modal: {
+      titleFontSize: 22,
+    },
+    Dropdown: {
+      paddingBlock: 6,
+    },
+    Table: {
+      headerBg: '#f4ebdd',
+      headerColor: '#53463c',
+      rowHoverBg: '#f4ebdd',
+      headerSplitColor: '#d5c4ae',
+      cellPaddingBlock: 12,
+      cellPaddingInline: 12,
+    },
+    Form: {
+      itemMarginBottom: 16,
+      labelColor: '#1b1612',
+    },
+    Tag: {
+      defaultBg: '#f4ebdd',
+      defaultColor: '#1b1612',
     },
     Menu: {
       darkItemBg: '#1b1612',
@@ -37,20 +81,8 @@ export const theme: ThemeConfig = {
       darkItemHoverBg: '#2a2420',
       darkItemColor: '#e7d7c4',
       darkItemSelectedColor: '#f8e7c4',
-    },
-    Card: {
-      borderRadiusLG: 8,
-    },
-    Button: {
-      primaryShadow: 'none',
-      defaultShadow: 'none',
-      dangerShadow: 'none',
-    },
-    Table: {
-      headerBg: '#f4ebdd',
-      headerColor: '#53463c',
-      rowHoverBg: '#f4ebdd',
-      headerSplitColor: '#d5c4ae',
+      darkGroupTitleColor: '#c8b7a4',
+      itemHeight: 36,
     },
   },
 }

@@ -336,7 +336,7 @@ describe('Workspace home', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     renderHome()
-    expect(await screen.findByRole('heading', { name: 'Your workspace' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
     expect(screen.queryByText('Harbour House')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }))
     expect(screen.getByRole('link', { name: 'Invoices and payments' })).toHaveAttribute('href', '/app/billing')

@@ -108,6 +108,25 @@
   background: var(--ink-soft);
 }
 
+.product-shot {
+  margin: 0;
+  min-width: 0;
+}
+
+.product-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.product-shot figcaption {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
 .landing a.btn-ghost,
 .btn-ghost {
   background: transparent;

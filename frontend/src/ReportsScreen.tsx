@@ -268,7 +268,7 @@ export function ReportsScreen({
         </div>
       ) : null}
       {phase === 'ready' && collections ? (
-        <div>
+        <div id="collections">
           <Typography.Title level={4} style={{ fontSize: '1.05rem' }}>
             Collections {collections.from} to {collections.to}
           </Typography.Title>
