@@ -8,6 +8,7 @@ import {
   signIn,
 } from '../api/session'
 import { theme } from '../theme'
+import { AuthPanelArt } from './AuthPanelArt'
 
 type SignInValues = {
   email: string
@@ -83,8 +84,11 @@ export function LoginPage() {
     <ConfigProvider theme={theme}>
       <main className="auth-split">
         <aside className="auth-brand">
-          <p className="auth-wordmark">Rent It HQ</p>
-          <p>The desk for the house, the rent, and the repairs.</p>
+          <AuthPanelArt />
+          <div className="auth-brand-copy">
+            <p className="auth-wordmark">Rent It HQ</p>
+            <p>The desk for the house, the rent, and the repairs.</p>
+          </div>
         </aside>
         <section className="auth-panel">
         <Card>
