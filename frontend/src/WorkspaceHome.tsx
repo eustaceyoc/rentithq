@@ -285,9 +285,20 @@ function WorkspacePanel({
           </>
         }
         actions={
-          <Button type="primary" onClick={() => setPasswordOpen(true)}>
-            Change password
-          </Button>
+          <span style={{ display: 'inline-flex', gap: 8, flexWrap: 'wrap' }}>
+            {isOwner ? (
+              <Button
+                onClick={() => {
+                  setInviteOpen(true)
+                }}
+              >
+                Add member
+              </Button>
+            ) : null}
+            <Button type="primary" onClick={() => setPasswordOpen(true)}>
+              Change password
+            </Button>
+          </span>
         }
       />
       <Modal
@@ -371,17 +382,7 @@ function WorkspacePanel({
             />
           ) : null}
           {isOwner ? (
-            <>
-              <Button
-                type="primary"
-                style={{ marginTop: 16 }}
-                onClick={() => {
-                  setInviteOpen(true)
-                }}
-              >
-                Add member
-              </Button>
-              <Modal
+            <Modal
                 title="Add someone who already has an account"
                 open={inviteOpen}
                 onCancel={() => {
@@ -425,7 +426,6 @@ function WorkspacePanel({
                   </Button>
                 </Form>
               </Modal>
-            </>
           ) : null}
     </Card>
     </>

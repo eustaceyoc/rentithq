@@ -332,7 +332,16 @@ export function OccupancyScreen({
       ? requested
       : initialSection
   const [reloadKey, setReloadKey] = useState(0)
+  const [createFor, setCreateFor] = useState<SectionId | null>(null)
   const manage = canManage(role)
+  const primary =
+    manage && section === 'residents'
+      ? 'Add resident'
+      : manage && section === 'bookings'
+        ? 'New reservation'
+        : manage && section === 'tenancies'
+          ? 'New agreement'
+          : null
 
   if (role === 'resident') {
     return <ResidentStay workspaceId={workspaceId} />
@@ -343,6 +352,13 @@ export function OccupancyScreen({
       <PageHeader
         title={heading}
         description="The end date is the last occupied day. The space is free the next day. A confirmed or active stay blocks that unit, room, or bed."
+        actions={
+          primary ? (
+            <Button type="primary" onClick={() => setCreateFor(section)}>
+              {primary}
+            </Button>
+          ) : null
+        }
       />
       {!manage ? (
         <Alert
@@ -363,20 +379,24 @@ export function OccupancyScreen({
         />
       ) : null}
       {section === 'residents' ? (
-        <ResidentsPanel
-          workspaceId={workspaceId}
-          manage={manage}
-          reloadKey={reloadKey}
-          onChanged={() => {
-            setReloadKey((value) => value + 1)
-          }}
-        />
+          <ResidentsPanel
+            workspaceId={workspaceId}
+            manage={manage}
+            reloadKey={reloadKey}
+            creating={createFor === 'residents'}
+            onCloseCreate={() => setCreateFor(null)}
+            onChanged={() => {
+              setReloadKey((value) => value + 1)
+            }}
+          />
       ) : null}
       {section === 'bookings' ? (
         <BookingsPanel
           workspaceId={workspaceId}
           manage={manage}
           reloadKey={reloadKey}
+          creating={createFor === 'bookings'}
+          onCloseCreate={() => setCreateFor(null)}
           onChanged={() => {
             setReloadKey((value) => value + 1)
           }}
@@ -387,6 +407,8 @@ export function OccupancyScreen({
           workspaceId={workspaceId}
           manage={manage}
           reloadKey={reloadKey}
+          creating={createFor === 'tenancies'}
+          onCloseCreate={() => setCreateFor(null)}
           onChanged={() => {
             setReloadKey((value) => value + 1)
           }}
@@ -413,18 +435,21 @@ function ResidentsPanel({
   workspaceId,
   manage,
   reloadKey,
+  creating,
+  onCloseCreate,
   onChanged,
 }: {
   workspaceId: string
   manage: boolean
   reloadKey: number
+  creating: boolean
+  onCloseCreate: () => void
   onChanged: () => void
 }) {
   const [rows, setRows] = useState<ResidentRecord[] | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [adding, setAdding] = useState(false)
   const [query, setQuery] = useState('')
 
   useEffect(() => {
@@ -459,7 +484,7 @@ function ResidentsPanel({
         account_email: values.account_email?.trim() ?? '',
       })
       notifyCatalogChanged()
-      setAdding(false)
+      onCloseCreate()
       onChanged()
     } catch (error: unknown) {
       setActionMessage(errorText(error))
@@ -537,23 +562,10 @@ function ResidentsPanel({
         />
         </>
       ) : null}
-      {manage ? (
-        <>
-        <Button
-          type="primary"
-          style={{ marginTop: 16 }}
-          onClick={() => {
-            setAdding(true)
-          }}
-        >
-          Add resident
-        </Button>
-        <Modal
+      <Modal
           title="Add a resident"
-          open={adding}
-          onCancel={() => {
-            setAdding(false)
-          }}
+          open={creating}
+          onCancel={onCloseCreate}
           footer={null}
           destroyOnHidden
         >
@@ -599,8 +611,6 @@ function ResidentsPanel({
           </div>
         </Form>
         </Modal>
-        </>
-      ) : null}
     </>
   )
 }
@@ -705,11 +715,15 @@ function BookingsPanel({
   workspaceId,
   manage,
   reloadKey,
+  creating,
+  onCloseCreate,
   onChanged,
 }: {
   workspaceId: string
   manage: boolean
   reloadKey: number
+  creating: boolean
+  onCloseCreate: () => void
   onChanged: () => void
 }) {
   const [rows, setRows] = useState<BookingRecord[] | null>(null)
@@ -717,7 +731,6 @@ function BookingsPanel({
   const [message, setMessage] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [creating, setCreating] = useState(false)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const places = usePlaces(workspaceId, true)
@@ -756,7 +769,7 @@ function BookingsPanel({
         start_date: values.start_date,
         end_date: values.end_date || null,
       })
-      setCreating(false)
+      onCloseCreate()
       onChanged()
     } catch (error: unknown) {
       setActionMessage(errorText(error))
@@ -950,24 +963,13 @@ function BookingsPanel({
         </>
       ) : null}
       {manage ? (
-        <>
-          <Button
-            type="primary"
-            onClick={() => {
-              setCreating(true)
-            }}
-          >
-            New reservation
-          </Button>
-          <Drawer
-            title="New reservation"
-            open={creating}
-            onClose={() => {
-              setCreating(false)
-            }}
-            size="large"
-            destroyOnHidden
-          >
+        <Drawer
+          title="New reservation"
+          open={creating}
+          onClose={onCloseCreate}
+          size="large"
+          destroyOnHidden
+        >
             <Form<StayValues>
               key={reloadKey}
               layout="vertical"
@@ -982,7 +984,6 @@ function BookingsPanel({
               </Button>
             </Form>
           </Drawer>
-        </>
       ) : null}
     </>
   )
@@ -1054,11 +1055,15 @@ function TenanciesPanel({
   workspaceId,
   manage,
   reloadKey,
+  creating,
+  onCloseCreate,
   onChanged,
 }: {
   workspaceId: string
   manage: boolean
   reloadKey: number
+  creating: boolean
+  onCloseCreate: () => void
   onChanged: () => void
 }) {
   const [rows, setRows] = useState<TenancyRecord[] | null>(null)
@@ -1066,7 +1071,6 @@ function TenanciesPanel({
   const [message, setMessage] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [creating, setCreating] = useState(false)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const places = usePlaces(workspaceId, true)
@@ -1118,6 +1122,7 @@ function TenanciesPanel({
         check_in: false,
       })
       notifyCatalogChanged()
+      onCloseCreate()
       onChanged()
     } catch (error: unknown) {
       setActionMessage(errorText(error))
@@ -1199,11 +1204,7 @@ function TenanciesPanel({
         </>
       ) : null}
       {manage ? (
-        <>
-        <Button type="primary" onClick={() => setCreating(true)}>
-          New agreement
-        </Button>
-        <Modal title="New agreement" open={creating} onCancel={() => setCreating(false)} footer={null} destroyOnHidden>
+        <Modal title="New agreement" open={creating} onCancel={onCloseCreate} footer={null} destroyOnHidden>
         <Form<StayValues>
           key={reloadKey}
           layout="vertical"
@@ -1238,7 +1239,6 @@ function TenanciesPanel({
           </div>
         </Form>
         </Modal>
-        </>
       ) : null}
     </>
   )
@@ -1256,6 +1256,7 @@ function TenancyActions({
   onError: (message: string | null) => void
 }) {
   const [endDate, setEndDate] = useState('')
+  const [ending, setEnding] = useState(false)
 
   async function run(action: () => Promise<unknown>) {
     onError(null)
@@ -1268,32 +1269,61 @@ function TenancyActions({
   }
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-      <Input
-        type="date"
-        aria-label={`End date for ${tenancy.resident_name}`}
-        value={endDate}
-        onChange={(event) => {
-          setEndDate(event.target.value)
-        }}
-        style={{ maxWidth: 220 }}
+    <>
+      <ActionMenu
+        label={`Actions for ${tenancy.resident_name}`}
+        items={[
+          {
+            key: 'end',
+            label: 'End agreement',
+            onClick: () => {
+              setEnding(true)
+            },
+          },
+          {
+            key: 'cancel',
+            label: 'Cancel agreement',
+            danger: true,
+            onClick: () => {
+              void run(() => cancelTenancy(workspaceId, tenancy.id))
+            },
+          },
+        ]}
       />
-      <Button
-        disabled={!endDate}
-        onClick={() => {
-          void run(() => endTenancy(workspaceId, tenancy.id, endDate))
+      <Modal
+        title={`End agreement for ${tenancy.resident_name}`}
+        open={ending}
+        onCancel={() => {
+          setEnding(false)
         }}
+        footer={null}
+        destroyOnHidden
       >
-        End agreement
-      </Button>
-      <Button
-        onClick={() => {
-          void run(() => cancelTenancy(workspaceId, tenancy.id))
-        }}
-      >
-        Cancel agreement
-      </Button>
-    </div>
+        <div style={{ display: 'grid', gap: 12 }}>
+          <Input
+            type="date"
+            aria-label={`End date for ${tenancy.resident_name}`}
+            value={endDate}
+            onChange={(event) => {
+              setEndDate(event.target.value)
+            }}
+          />
+          <div className="form-actions">
+            <Button
+              type="primary"
+              disabled={!endDate}
+              onClick={() => {
+                void run(() => endTenancy(workspaceId, tenancy.id, endDate)).then(() => {
+                  setEnding(false)
+                })
+              }}
+            >
+              End agreement
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
   )
 }
 
@@ -1398,6 +1428,7 @@ function StayActions({
   onError: (message: string | null) => void
 }) {
   const [endDate, setEndDate] = useState(stay.end_date ?? '')
+  const [checkingOut, setCheckingOut] = useState(false)
   const [startDate, setStartDate] = useState(stay.start_date)
   const [plannedEnd, setPlannedEnd] = useState(stay.end_date ?? '')
   const [moveDate, setMoveDate] = useState('')
@@ -1438,26 +1469,51 @@ function StayActions({
         </div>
       ) : null}
       {stay.status === 'active' ? (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          <Input
-            type="date"
-            aria-label={`Last occupied day for ${stay.resident_name}`}
-            value={endDate}
-            onChange={(event) => {
-              setEndDate(event.target.value)
-            }}
-            style={{ maxWidth: 220 }}
+        <>
+          <ActionMenu
+            label={`Actions for ${stay.resident_name}`}
+            items={[
+              {
+                key: 'out',
+                label: 'Check out',
+                onClick: () => {
+                  setCheckingOut(true)
+                },
+              },
+            ]}
           />
-          <Button
-            size="small"
-            disabled={!endDate}
-            onClick={() => {
-              void run(() => checkOutAssignment(workspaceId, stay.id, endDate))
+          <Modal
+            title={`Check out ${stay.resident_name}`}
+            open={checkingOut}
+            onCancel={() => {
+              setCheckingOut(false)
             }}
+            footer={null}
+            destroyOnHidden
           >
-            Check out {stay.resident_name}
-          </Button>
-        </div>
+            <div style={{ display: 'grid', gap: 12 }}>
+              <Input
+                type="date"
+                aria-label={`Last occupied day for ${stay.resident_name}`}
+                value={endDate}
+                onChange={(event) => {
+                  setEndDate(event.target.value)
+                }}
+              />
+              <div className="form-actions">
+                <Button
+                  type="primary"
+                  disabled={!endDate}
+                  onClick={() => {
+                    void run(() => checkOutAssignment(workspaceId, stay.id, endDate))
+                  }}
+                >
+                  Check out {stay.resident_name}
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        </>
       ) : null}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         <Input

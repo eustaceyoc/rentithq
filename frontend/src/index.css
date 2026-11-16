@@ -221,6 +221,63 @@ h3.ant-typography {
   background: var(--bg);
 }
 
+.auth-split {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr);
+  background: var(--bg);
+}
+
+.auth-brand {
+  background: var(--ink);
+  color: #f4ebdd;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.auth-brand p {
+  margin: 0;
+  max-width: 28ch;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.auth-wordmark {
+  font-family: var(--display);
+  font-size: 44px;
+  line-height: 1.05;
+  color: #f8e7c4;
+}
+
+.auth-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.auth-panel .ant-card {
+  width: min(440px, 100%);
+}
+
+@media (max-width: 800px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-brand {
+    min-height: 168px;
+    padding: 28px 20px;
+  }
+
+  .auth-wordmark {
+    font-size: 32px;
+  }
+}
+
 .auth-frame .ant-card {
   width: min(480px, 100%);
   margin: 0 auto;
@@ -370,6 +427,17 @@ button {
 .account-menu span {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.account-initials {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #f8e7c4;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .data-table {

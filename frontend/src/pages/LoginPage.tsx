@@ -81,10 +81,14 @@ export function LoginPage() {
 
   return (
     <ConfigProvider theme={theme}>
-      <main className="auth-frame">
+      <main className="auth-split">
+        <aside className="auth-brand">
+          <p className="auth-wordmark">Rent It HQ</p>
+          <p>The desk for the house, the rent, and the repairs.</p>
+        </aside>
+        <section className="auth-panel">
         <Card>
-          <p className="page-title">Rent It HQ</p>
-          <Typography.Title level={2} style={{ marginTop: 8 }}>
+          <Typography.Title level={2} style={{ marginTop: 0 }}>
             {mode === 'sign-in' ? 'Sign in' : 'Create an account'}
           </Typography.Title>
           <Typography.Paragraph>
@@ -162,6 +166,7 @@ export function LoginPage() {
             {mode === 'sign-in' ? 'Create an account' : 'Already have an account? Sign in'}
           </Button>
         </Card>
+        </section>
       </main>
     </ConfigProvider>
   )

@@ -260,10 +260,12 @@ describe('Occupancy screen', () => {
     )
     render(<OccupancyScreen workspaceId="ws-ada" role="owner" />)
     fireEvent.click(await screen.findByRole('button', { name: 'Stays' }))
-    const amaEnd = await screen.findByLabelText('Last occupied day for Ama Mensah')
-    const kojoEnd = screen.getByLabelText('Last occupied day for Kojo Boateng')
-    fireEvent.change(amaEnd, { target: { value: '2026-06-04' } })
-    fireEvent.change(kojoEnd, { target: { value: '2026-07-15' } })
+    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Ama Mensah' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Check out' }))
+    fireEvent.change(screen.getByLabelText('Last occupied day for Ama Mensah'), {
+      target: { value: '2026-06-04' },
+    })
+    expect(screen.queryByLabelText('Last occupied day for Kojo Boateng')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Check out Ama Mensah' }))
     expect(await screen.findByText(/checked_out/)).toBeInTheDocument()
     expect(calls).toEqual(['{"end_date":"2026-06-04"}'])

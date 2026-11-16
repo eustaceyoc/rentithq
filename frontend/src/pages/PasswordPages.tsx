@@ -18,16 +18,19 @@ function AuthCard({
 }) {
   return (
     <ConfigProvider theme={theme}>
-      <main className="auth-frame">
-        <Card>
-          <Typography.Title level={1} style={{ marginTop: 0, fontSize: '1.7rem' }}>
-            Rent It HQ
-          </Typography.Title>
-          <Typography.Title level={2} style={{ marginTop: 0, fontSize: '1.5rem' }}>
-            {title}
-          </Typography.Title>
-          {children}
-        </Card>
+      <main className="auth-split">
+        <aside className="auth-brand">
+          <p className="auth-wordmark">Rent It HQ</p>
+          <p>The desk for the house, the rent, and the repairs.</p>
+        </aside>
+        <section className="auth-panel">
+          <Card>
+            <Typography.Title level={2} style={{ marginTop: 0, fontSize: '1.5rem' }}>
+              {title}
+            </Typography.Title>
+            {children}
+          </Card>
+        </section>
       </main>
     </ConfigProvider>
   )

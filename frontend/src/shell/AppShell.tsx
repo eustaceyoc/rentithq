@@ -16,6 +16,16 @@ import { Link, useLocation } from 'react-router-dom'
 
 const { Header, Sider, Content } = Layout
 
+function initials(email: string): string {
+  const local = email.split('@')[0] ?? ''
+  const parts = local.split(/[._+-]+/).filter(Boolean)
+  const letters =
+    parts.length > 1
+      ? `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}`
+      : local.slice(0, 2)
+  return letters.toUpperCase() || 'HQ'
+}
+
 type Leaf = {
   key: string
   label: string
@@ -183,7 +193,16 @@ export function AppShell({
         children: group.children.map((item) => ({
           key: item.key,
           icon: item.icon,
-          label: <Link to={item.key}>{item.label}</Link>,
+          label: (
+            <Link
+              to={item.key}
+              onClick={() => {
+                setDrawerOpen(false)
+              }}
+            >
+              {item.label}
+            </Link>
+          ),
         })),
       }))}
     />
@@ -243,15 +262,16 @@ export function AppShell({
                   setDrawerOpen(true)
                 }}
               />
-            ) : null}
-            <div style={{ minWidth: 0 }}>
-              <Typography.Text strong ellipsis style={{ display: 'block', lineHeight: 1.2 }}>
-                {workspaceName}
-              </Typography.Text>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {roleName}
-              </Typography.Text>
-            </div>
+            ) : (
+              <div style={{ minWidth: 0 }}>
+                <Typography.Text strong ellipsis style={{ display: 'block', lineHeight: 1.2 }}>
+                  {workspaceName}
+                </Typography.Text>
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  {roleName}
+                </Typography.Text>
+              </div>
+            )}
           </div>
           <Dropdown
             menu={{
@@ -263,16 +283,27 @@ export function AppShell({
               ],
             }}
           >
-            <Button
-              type="text"
-              className="account-menu"
-              aria-haspopup="menu"
-              aria-label={`Account menu for ${email}`}
-              icon={<DownOutlined />}
-              iconPlacement="end"
-            >
-              <span>{email}</span>
-            </Button>
+            {isMobile ? (
+              <Button
+                type="text"
+                className="account-initials"
+                aria-haspopup="menu"
+                aria-label={`Account menu for ${email}`}
+              >
+                {initials(email)}
+              </Button>
+            ) : (
+              <Button
+                type="text"
+                className="account-menu"
+                aria-haspopup="menu"
+                aria-label={`Account menu for ${email}`}
+                icon={<DownOutlined />}
+                iconPlacement="end"
+              >
+                <span>{email}</span>
+              </Button>
+            )}
           </Dropdown>
         </Header>
         <Content className="app-content">{children}</Content>

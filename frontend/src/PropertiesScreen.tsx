@@ -40,6 +40,13 @@ import {
   type SpaceRecord,
 } from './api/properties'
 import { errorText } from './api/session'
+import {
+  listAssignments,
+  listAvailability,
+  type AssignmentRecord,
+  type AvailabilityRow,
+} from './api/occupancy'
+import { loadOccupancyReport } from './api/reports'
 
 const AVAILABILITY_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -89,14 +96,65 @@ function kindLabel(kind: SpaceKind): string {
   return kind === 'unit' ? 'Whole unit' : 'Room'
 }
 
-function spaceState(space: SpaceRecord): string {
-  if (space.availability === 'unavailable') {
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function lettingForSpace(
+  space: SpaceRecord,
+  rows: AvailabilityRow[],
+  stays: AssignmentRecord[],
+  today: string,
+): string {
+  if (space.availability === 'unavailable' || space.availability === 'inactive') {
     return 'unavailable'
   }
-  if (space.availability === 'inactive') {
-    return 'inactive'
+  const row = rows.find((item) => item.space_id === space.id && item.bed_id === null)
+  if (row?.state === 'occupied' || row?.state === 'partly_occupied') {
+    return 'occupied'
   }
-  return 'active'
+  if (row?.state === 'unavailable') {
+    return 'unavailable'
+  }
+  const reserved = stays.some(
+    (stay) =>
+      stay.space_id === space.id && stay.status === 'confirmed' && stay.start_date > today,
+  )
+  return reserved ? 'reserved' : 'available'
+}
+
+function lettingForBed(
+  bed: BedRecord,
+  space: SpaceRecord,
+  rows: AvailabilityRow[],
+  stays: AssignmentRecord[],
+  today: string,
+): string {
+  if (
+    bed.availability === 'unavailable' ||
+    bed.availability === 'inactive' ||
+    space.availability !== 'active'
+  ) {
+    return 'unavailable'
+  }
+  const row = rows.find((item) => item.bed_id === bed.id)
+  if (row?.state === 'occupied') {
+    return 'occupied'
+  }
+  if (row?.state === 'unavailable') {
+    return 'unavailable'
+  }
+  const whole = rows.find((item) => item.space_id === space.id && item.bed_id === null)
+  if (whole?.state === 'occupied') {
+    return 'occupied'
+  }
+  const reserved = stays.some(
+    (stay) =>
+      stay.status === 'confirmed' &&
+      stay.start_date > today &&
+      (stay.bed_id === bed.id || (stay.bed_id === null && stay.space_id === space.id)),
+  )
+  return reserved ? 'reserved' : 'available'
 }
 
 function StatusSelect({
@@ -145,6 +203,9 @@ function PropertyDetail({
   const [openSpaceId, setOpenSpaceId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [adding, setAdding] = useState(false)
+  const [lettingRows, setLettingRows] = useState<AvailabilityRow[]>([])
+  const [stays, setStays] = useState<AssignmentRecord[]>([])
+  const today = todayISO()
   const [spaceForm] = Form.useForm<SpaceValues>()
   const selectedBuilding = Form.useWatch('building_id', spaceForm)
 
@@ -173,6 +234,29 @@ function PropertyDetail({
       controller.abort()
     }
   }, [property.id, reloadKey, workspaceId])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    Promise.all([
+      listAvailability(workspaceId, today, controller.signal),
+      listAssignments(workspaceId, controller.signal),
+    ])
+      .then(([rows, assignments]) => {
+        if (!controller.signal.aborted) {
+          setLettingRows(rows)
+          setStays(assignments)
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setLettingRows([])
+          setStays([])
+        }
+      })
+    return () => {
+      controller.abort()
+    }
+  }, [reloadKey, today, workspaceId])
 
   function refresh() {
     setBuildings(null)
@@ -288,9 +372,16 @@ function PropertyDetail({
       <Button onClick={onBack} style={{ marginBottom: 12 }}>
         All properties
       </Button>
-      <Typography.Title level={2} style={{ marginTop: 0, fontSize: 20, fontWeight: 600 }}>
-        {property.name}
-      </Typography.Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <Typography.Title level={2} style={{ marginTop: 0, fontSize: 20, fontWeight: 600 }}>
+          {property.name}
+        </Typography.Title>
+        {canManage && !openSpace ? (
+          <Button type="primary" onClick={() => setAdding(true)}>
+            Add a room
+          </Button>
+        ) : null}
+      </div>
       <Typography.Paragraph>
         {property.address
           ? property.address
@@ -326,6 +417,9 @@ function PropertyDetail({
           workspaceId={workspaceId}
           space={openSpace}
           canManage={canManage}
+          lettingRows={lettingRows}
+          stays={stays}
+          today={today}
           onBack={() => {
             setOpenSpaceId(null)
           }}
@@ -384,6 +478,8 @@ function PropertyDetail({
               columns={[
                 {
                   title: 'Name',
+                  ellipsis: true,
+                  width: 200,
                   render: (_value, space) => (
                     <Button
                       type="link"
@@ -396,15 +492,17 @@ function PropertyDetail({
                   ),
                 },
                 {
-                  title: 'Kind',
-                  dataIndex: 'kind',
-                  render: (value: string) => kindLabel(value as SpaceKind),
+                  title: 'Stay',
+                  width: 130,
+                  render: (_value, space) => (
+                    <StatusTag value={lettingForSpace(space, lettingRows, stays, today)} />
+                  ),
                 },
                 {
-                  title: 'State',
-                  render: (_value, space) => (
-                    <StatusTag value={spaceState(space)} />
-                  ),
+                  title: 'Kind',
+                  dataIndex: 'kind',
+                  width: 120,
+                  render: (value: string) => kindLabel(value as SpaceKind),
                 },
                 {
                   title: 'Availability',
@@ -456,11 +554,7 @@ function PropertyDetail({
             />
           )}
           {canManage ? (
-            <>
-              <Button type="primary" onClick={() => setAdding(true)}>
-                Add a room
-              </Button>
-              <Modal title="Add to this property" open={adding} onCancel={() => setAdding(false)} footer={null} destroyOnHidden>
+            <Modal title="Add to this property" open={adding} onCancel={() => setAdding(false)} footer={null} destroyOnHidden>
               <Form<NameValues>
                 layout="vertical"
                 requiredMark={false}
@@ -557,7 +651,6 @@ function PropertyDetail({
                 </Button>
               </Form>
               </Modal>
-            </>
           ) : null}
         </>
       ) : null}
@@ -583,12 +676,18 @@ function RoomDetail({
   workspaceId,
   space,
   canManage,
+  lettingRows,
+  stays,
+  today,
   onBack,
   onChange,
 }: {
   workspaceId: string
   space: SpaceRecord
   canManage: boolean
+  lettingRows: AvailabilityRow[]
+  stays: AssignmentRecord[]
+  today: string
   onBack: () => void
   onChange: (space: SpaceRecord) => void
 }) {
@@ -675,9 +774,16 @@ function RoomDetail({
       <Button onClick={onBack} style={{ marginBottom: 12 }}>
         Back to property
       </Button>
-      <Typography.Title level={4} style={{ fontSize: '1.05rem' }}>
-        {space.name}
-      </Typography.Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <Typography.Title level={4} style={{ fontSize: '1.05rem', marginTop: 0 }}>
+          {space.name}
+        </Typography.Title>
+        {canManage && space.kind === 'room' ? (
+          <Button type="primary" onClick={() => setAddingBed(true)}>
+            Add bed
+          </Button>
+        ) : null}
+      </div>
       <Typography.Paragraph>{kindLabel(space.kind)}</Typography.Paragraph>
       {actionMessage ? (
         <Alert
@@ -726,7 +832,10 @@ function RoomDetail({
             <ul style={{ paddingInlineStart: 18 }}>
               {beds.map((bed) => (
                 <li key={bed.id} style={{ marginBottom: 12 }}>
-                  <span>{bed.name}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    {bed.name}
+                    <StatusTag value={lettingForBed(bed, space, lettingRows, stays, today)} />
+                  </span>
                   {canManage ? (
                     <StatusSelect
                       label={`Availability for ${bed.name}`}
@@ -761,10 +870,6 @@ function RoomDetail({
             </ul>
           ) : null}
           {canManage ? (
-            <>
-            <Button type="primary" onClick={() => setAddingBed(true)}>
-              Add bed
-            </Button>
             <Modal title="Add a bed" open={addingBed} onCancel={() => setAddingBed(false)} footer={null} destroyOnHidden>
             <Form<NameValues>
               key={bedFormKey}
@@ -788,7 +893,6 @@ function RoomDetail({
               </div>
             </Form>
             </Modal>
-            </>
           ) : null}
         </>
       )}
@@ -831,6 +935,7 @@ export function PropertiesScreen({
   const [openId, setOpenId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [counts, setCounts] = useState<Record<string, { occupied: number; free: number }>>({})
 
   useEffect(() => {
     if (!canView) {
@@ -848,6 +953,22 @@ export function PropertiesScreen({
           return
         }
         setMessage(errorText(error))
+      })
+    loadOccupancyReport(workspaceId, todayISO(), controller.signal)
+      .then((report) => {
+        if (controller.signal.aborted) {
+          return
+        }
+        const next: Record<string, { occupied: number; free: number }> = {}
+        for (const row of report.properties) {
+          next[row.property_id] = { occupied: row.occupied, free: row.free }
+        }
+        setCounts(next)
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setCounts({})
+        }
       })
     return () => {
       controller.abort()
@@ -969,8 +1090,28 @@ export function PropertiesScreen({
         <DataTable
           rowKey="id"
           dataSource={properties}
+          onRow={(property) => ({
+            onClick: (event) => {
+              const target = event.target
+              if (target instanceof Element && target.closest('button, a, .ant-dropdown')) {
+                return
+              }
+              setOpenId(property.id)
+            },
+            style: { cursor: 'pointer' },
+          })}
           columns={[
             { title: 'Property', dataIndex: 'name' },
+            {
+              title: 'Occupied',
+              key: 'occupied',
+              render: (_value, property) => counts[property.id]?.occupied ?? 0,
+            },
+            {
+              title: 'Vacant',
+              key: 'vacant',
+              render: (_value, property) => counts[property.id]?.free ?? 0,
+            },
             {
               title: 'Address',
               dataIndex: 'address',
@@ -981,14 +1122,27 @@ export function PropertiesScreen({
               key: 'open',
               align: 'right',
               render: (_value, property) => (
-                <Button
-                  type="link"
-                  onClick={() => {
-                    setOpenId(property.id)
-                  }}
-                >
-                  Open {property.name}
-                </Button>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Button
+                    type="link"
+                    aria-label={`Open ${property.name}`}
+                    onClick={() => {
+                      setOpenId(property.id)
+                    }}
+                  >
+                    Open
+                  </Button>
+                  <ActionMenu
+                    label={`Actions for ${property.name}`}
+                    items={[
+                      {
+                        key: 'open',
+                        label: 'Open',
+                        onClick: () => setOpenId(property.id),
+                      },
+                    ]}
+                  />
+                </span>
               ),
             },
           ]}

@@ -16,7 +16,10 @@ const TONE: Record<string, string> = {
   low: 'neutral',
   normal: 'neutral',
   cancelled: 'neutral',
-  unavailable: 'warn',
+  occupied: 'info',
+  reserved: 'warn',
+  available: 'good',
+  unavailable: 'bad',
   inactive: 'neutral',
   void: 'neutral',
   voided: 'neutral',
@@ -30,9 +33,21 @@ const MONEY_LABEL: Record<string, string> = {
   void: 'Void',
 }
 
+const LABEL: Record<string, string> = {
+  occupied: 'Occupied',
+  reserved: 'Reserved',
+  available: 'Available',
+  unavailable: 'Unavailable',
+  paid: 'Paid',
+  partial: 'Partially paid',
+  overdue: 'Overdue',
+  outstanding: 'Outstanding',
+  in_progress: 'In progress',
+}
+
 export function StatusTag({ value }: { value: string }) {
   const tone = TONE[value] ?? 'neutral'
-  const label = value.replaceAll('_', ' ')
+  const label = LABEL[value] ?? value.replaceAll('_', ' ')
   return (
     <span className={`status-tag status-${tone}`}>
       <i aria-hidden="true" />
