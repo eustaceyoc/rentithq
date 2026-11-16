@@ -1,32 +1,25 @@
-import { Tag } from 'antd'
-
 const TONE: Record<string, string> = {
-  active: 'success',
-  confirmed: 'processing',
-  issued: 'processing',
-  recorded: 'processing',
-  paid: 'success',
-  overdue: 'error',
-  partial: 'warning',
-  outstanding: 'processing',
-  completed: 'success',
-  open: 'warning',
-  assigned: 'processing',
-  in_progress: 'processing',
-  high: 'warning',
-  urgent: 'error',
-  low: 'default',
-  normal: 'default',
-  cancelled: 'default',
-  unavailable: 'warning',
-  inactive: 'default',
-  void: 'default',
-  voided: 'default',
-}
-
-export function StatusTag({ value }: { value: string }) {
-  const tone = TONE[value] ?? 'default'
-  return <Tag color={tone === 'default' ? undefined : tone}>{value.replaceAll('_', ' ')}</Tag>
+  active: 'neutral',
+  confirmed: 'info',
+  issued: 'info',
+  recorded: 'info',
+  paid: 'good',
+  overdue: 'bad',
+  partial: 'warn',
+  outstanding: 'info',
+  completed: 'good',
+  open: 'warn',
+  assigned: 'info',
+  in_progress: 'info',
+  high: 'warn',
+  urgent: 'bad',
+  low: 'neutral',
+  normal: 'neutral',
+  cancelled: 'neutral',
+  unavailable: 'warn',
+  inactive: 'neutral',
+  void: 'neutral',
+  voided: 'neutral',
 }
 
 const MONEY_LABEL: Record<string, string> = {
@@ -35,6 +28,17 @@ const MONEY_LABEL: Record<string, string> = {
   overdue: 'Overdue',
   outstanding: 'Outstanding',
   void: 'Void',
+}
+
+export function StatusTag({ value }: { value: string }) {
+  const tone = TONE[value] ?? 'neutral'
+  const label = value.replaceAll('_', ' ')
+  return (
+    <span className={`status-tag status-${tone}`}>
+      <i aria-hidden="true" />
+      {label}
+    </span>
+  )
 }
 
 function moneyState(invoice: {
@@ -73,6 +77,12 @@ export function MoneyTag({
   }
 }) {
   const state = moneyState(invoice)
-  const tone = TONE[state] ?? 'default'
-  return <Tag color={tone === 'default' ? undefined : tone}>{MONEY_LABEL[state] ?? state}</Tag>
+  const label = MONEY_LABEL[state] ?? state
+  const tone = TONE[state] ?? 'neutral'
+  return (
+    <span className={`status-tag status-${tone}`}>
+      <i aria-hidden="true" />
+      {label}
+    </span>
+  )
 }

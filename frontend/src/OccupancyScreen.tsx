@@ -51,7 +51,7 @@ import {
   type TenancyRecord,
 } from './api/occupancy'
 import { errorText } from './api/session'
-import { formatMoney } from './money'
+import { formatDate, formatMoney } from './money'
 
 const SECTIONS = [
   { id: 'residents', label: 'Residents' },
@@ -81,7 +81,7 @@ function canManage(role: string): boolean {
 }
 
 function stayDates(start: string, end: string | null): string {
-  return end === null ? `${start}, open ended` : `${start} to ${end}`
+  return end === null ? `${formatDate(start)}, open ended` : `${formatDate(start)} to ${formatDate(end)}`
 }
 
 function placeLabel(space: SpaceRecord, beds: BedRecord[]): string {

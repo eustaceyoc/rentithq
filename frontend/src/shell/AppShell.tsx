@@ -163,7 +163,6 @@ export function AppShell({
 }) {
   const screens = Grid.useBreakpoint()
   const isMobile = !screens.lg
-  const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const location = useLocation()
   const groups = groupsFor(role)
@@ -207,25 +206,19 @@ export function AppShell({
         </Drawer>
       ) : (
         <Sider
-          collapsible
-          collapsed={collapsed}
-          onCollapse={setCollapsed}
+          collapsible={false}
           width={248}
           theme="dark"
           style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'auto' }}
         >
           <div
             className="sider-brand"
-            style={{
-              paddingInline: collapsed ? 8 : 16,
-              justifyContent: collapsed ? 'center' : 'flex-start',
-            }}
+            style={{ paddingInline: 16, justifyContent: 'flex-start' }}
           >
             <span className="brand-mark" aria-hidden="true">
               R
             </span>
-            {collapsed ? null : (
-              <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0 }}>
                 <Typography.Text
                   style={{ color: '#f8e7c4', display: 'block', fontWeight: 700, lineHeight: 1.2 }}
                 >
@@ -235,7 +228,6 @@ export function AppShell({
                   {workspaceName}
                 </Typography.Text>
               </div>
-            )}
           </div>
           {menu}
         </Sider>

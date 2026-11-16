@@ -12,7 +12,7 @@ import {
   type OccupancyReport,
 } from '../api/reports'
 import { errorText } from '../api/session'
-import { formatMoney } from '../money'
+import { formatDate, formatMoney } from '../money'
 
 function today(): string {
   const now = new Date()
@@ -118,34 +118,38 @@ export function DashboardPage({
       {phase === 'ready' && occupancy && maintenance ? (
         <>
           <div className="ledger-strip" aria-label="Workspace summary">
+            {money && arrears ? (
+              <div className="ledger-lead">
+                <span>Outstanding</span>
+                <strong className="money">{formatMoney(arrears.outstanding_amount, currency)}</strong>
+                <span>{arrears.invoice_count} invoices due today or earlier</span>
+              </div>
+            ) : null}
+            {money && collections ? (
+              <div className="ledger-lead">
+                <span>Collected this month</span>
+                <strong className="money">{formatMoney(collections.collected_amount, currency)}</strong>
+                <span>
+                  {collections.payment_count} payments · net {formatMoney(collections.net_amount, currency)}
+                </span>
+              </div>
+            ) : null}
             <div>
               <span>Rooms occupied</span>
               <strong>{roomsOccupied}</strong>
-              <em>{roomsFree} free</em>
+              <span>{roomsFree} free</span>
             </div>
             <div>
               <span>Units occupied</span>
               <strong>{unitsOccupied}</strong>
-              <em>{unitsFree} free · {bedsOccupied} beds taken, {bedsFree} free</em>
+              <span>
+                {unitsFree} free · {bedsOccupied} beds taken, {bedsFree} free
+              </span>
             </div>
-            {money && arrears ? (
-              <div>
-                <span>Outstanding</span>
-                <strong className="money">{formatMoney(arrears.outstanding_amount, currency)}</strong>
-                <em>{arrears.invoice_count} invoices due today or earlier</em>
-              </div>
-            ) : null}
-            {money && collections ? (
-              <div>
-                <span>Collected this month</span>
-                <strong className="money">{formatMoney(collections.collected_amount, currency)}</strong>
-                <em>{collections.payment_count} payments · net {formatMoney(collections.net_amount, currency)}</em>
-              </div>
-            ) : null}
             <div>
               <span>Open maintenance</span>
               <strong>{maintenance.open_count}</strong>
-              <em>{urgent > 0 ? `${urgent} high or urgent` : 'None marked high or urgent'}</em>
+              <span>{urgent > 0 ? `${urgent} high or urgent` : 'None marked high or urgent'}</span>
             </div>
           </div>
           <div className="desk-grid">
@@ -162,7 +166,6 @@ export function DashboardPage({
                   { title: 'Property', dataIndex: 'property_name' },
                   { title: 'Occupied', dataIndex: 'occupied', align: 'right' },
                   { title: 'Free', dataIndex: 'free', align: 'right' },
-                  { title: 'Unavailable', dataIndex: 'unavailable', align: 'right' },
                 ]}
                 scroll={{ x: 'max-content' }}
               />
@@ -181,7 +184,11 @@ export function DashboardPage({
                 columns={[
                   { title: 'Resident', dataIndex: 'resident_name' },
                   { title: 'Place', dataIndex: 'label' },
-                  { title: 'Last day', dataIndex: 'end_date' },
+                  {
+                    title: 'Last day',
+                    dataIndex: 'end_date',
+                    render: (value: string) => formatDate(value),
+                  },
                 ]}
                 scroll={{ x: 'max-content' }}
               />
@@ -196,13 +203,24 @@ export function DashboardPage({
             <section className="desk-panel" style={{ marginTop: 16 }}>
               <h2>Collections by method</h2>
               <ul className="method-bars">
-                {collections.by_method.map((row) => (
-                  <li key={row.method}>
-                    <span>{row.method.replaceAll('_', ' ')}</span>
-                    <span className="money">{formatMoney(row.amount, currency)}</span>
-                    <em>{row.count}</em>
-                  </li>
-                ))}
+                {collections.by_method.map((row) => {
+                  const max = Math.max(
+                    ...collections.by_method.map((item) => Number(item.amount) || 0),
+                    1,
+                  )
+                  const width = Math.max(8, Math.round((Number(row.amount) / max) * 100))
+                  return (
+                    <li key={row.method}>
+                      <span>
+                        {row.method.replaceAll('_', ' ')} · {row.count}
+                        <span className="method-track" aria-hidden="true">
+                          <i style={{ width: `${width}%` }} />
+                        </span>
+                      </span>
+                      <span className="money">{formatMoney(row.amount, currency)}</span>
+                    </li>
+                  )
+                })}
               </ul>
             </section>
           ) : null}

@@ -1,4 +1,4 @@
-import { Alert, Button, Empty, Form, Input, Select, Table, Typography } from 'antd'
+import { Alert, Button, Empty, Form, Input, Modal, Select, Table, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import {
   createMaintenanceRequest,
@@ -78,6 +78,7 @@ export function MaintenanceScreen({
   const [propertyId, setPropertyId] = useState<string | undefined>()
   const [spaceId, setSpaceId] = useState<string | undefined>()
   const [focus, setFocus] = useState<'all' | 'open' | 'urgent'>('all')
+  const [filing, setFiling] = useState(false)
   const catalogRevision = useCatalogRevision()
 
   useEffect(() => {
@@ -179,6 +180,7 @@ export function MaintenanceScreen({
         }
       }
       await createMaintenanceRequest(workspaceId, input)
+      setFiling(false)
       await refresh()
     } catch (error: unknown) {
       setActionMessage(errorText(error))
@@ -228,6 +230,13 @@ export function MaintenanceScreen({
     <section id="maintenance">
       <PageHeader
         title="Maintenance"
+        actions={
+          phase === 'ready' ? (
+            <Button type="primary" onClick={() => setFiling(true)}>
+              File request
+            </Button>
+          ) : null
+        }
         description={
           resident
             ? 'File a request for your own stay and follow its status. You cannot change the status or the cost.'
@@ -269,8 +278,14 @@ export function MaintenanceScreen({
         />
       ) : null}
       {phase === 'ready' ? (
+        <Modal
+          title="File a request"
+          open={filing}
+          onCancel={() => setFiling(false)}
+          footer={null}
+          destroyOnHidden
+        >
         <Form<FileValues>
-          className="form-panel"
           layout="vertical"
           requiredMark={false}
           initialValues={{ priority: 'normal' }}
@@ -358,10 +373,13 @@ export function MaintenanceScreen({
           >
             <Select options={PRIORITIES} />
           </Form.Item>
-          <Button type="primary" htmlType="submit">
-            File request
-          </Button>
+          <div className="form-actions">
+            <Button type="primary" htmlType="submit">
+              File request
+            </Button>
+          </div>
         </Form>
+        </Modal>
       ) : null}
       {requests && requests.length > 0 ? (
         <>

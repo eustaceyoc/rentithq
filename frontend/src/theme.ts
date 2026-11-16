@@ -50,7 +50,7 @@ export const theme: ThemeConfig = {
       optionSelectedBg: '#f4ebdd',
     },
     Pagination: {
-      itemActiveBg: '#1b1612',
+      itemActiveBg: '#f4ebdd',
     },
     Modal: {
       titleFontSize: 22,
@@ -59,12 +59,13 @@ export const theme: ThemeConfig = {
       paddingBlock: 6,
     },
     Table: {
-      headerBg: '#f4ebdd',
+      headerBg: '#f7f1e6',
       headerColor: '#53463c',
-      rowHoverBg: '#f4ebdd',
-      headerSplitColor: '#d5c4ae',
-      cellPaddingBlock: 12,
-      cellPaddingInline: 12,
+      rowHoverBg: '#f7f1e6',
+      headerSplitColor: 'transparent',
+      borderColor: '#efe6d8',
+      cellPaddingBlock: 14,
+      cellPaddingInline: 16,
     },
     Form: {
       itemMarginBottom: 16,

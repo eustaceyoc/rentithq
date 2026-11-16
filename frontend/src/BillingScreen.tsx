@@ -1,4 +1,5 @@
-import { Alert, Button, Checkbox, Empty, Form, Input, Select, Table, Typography } from 'antd'
+import { DownOutlined, RightOutlined } from '@ant-design/icons'
+import { Alert, Button, Checkbox, Empty, Form, Input, Modal, Select, Table, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -20,7 +21,8 @@ import {
 import { listResidents, listTenancies, type ResidentRecord, type TenancyRecord } from './api/occupancy'
 import { errorText } from './api/session'
 import { useCatalogRevision } from './catalog'
-import { formatMoney } from './money'
+import { formatDate, formatMoney } from './money'
+import { ActionMenu } from './ui/ActionMenu'
 import { MethodLabel } from './ui/MethodLabel'
 import { PageHeader } from './ui/PageHeader'
 import { SectionSwitch } from './ui/SectionSwitch'
@@ -111,12 +113,7 @@ function RecurringRent({ workspaceId }: { workspaceId: string }) {
   }
 
   return (
-    <div className="form-panel" style={{ marginTop: 0, marginBottom: 16 }}>
-      <p className="form-panel-title">Recurring rent</p>
-      <Typography.Paragraph>
-        Issue the agreed fee for each period that has started. A manual invoice is still available.
-      </Typography.Paragraph>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <>
         <Button
           onClick={() => {
             void run(true)
@@ -132,9 +129,8 @@ function RecurringRent({ workspaceId }: { workspaceId: string }) {
         >
           Generate recurring invoices
         </Button>
-      </div>
-      {note ? <Typography.Paragraph style={{ marginTop: 12 }}>{note}</Typography.Paragraph> : null}
-    </div>
+      {note ? <p className="toolbar-note">{note}</p> : null}
+    </>
   )
 }
 
@@ -355,6 +351,14 @@ function InvoiceList({
         dataSource={invoices}
         scroll={{ x: 'max-content' }}
         expandable={{
+          expandIcon: ({ expanded, onExpand, record }) => (
+            <Button
+              type="text"
+              aria-label={expanded ? `Collapse ${record.reference}` : `Expand ${record.reference}`}
+              icon={expanded ? <DownOutlined /> : <RightOutlined />}
+              onClick={(event) => onExpand(record, event)}
+            />
+          ),
           expandedRowRender: (invoice) => (
             <div>
               {invoice.lines.map((line, index) => (
@@ -397,24 +401,40 @@ function InvoiceList({
             dataIndex: 'status',
             render: (_status: string, invoice) => <MoneyTag invoice={invoice} />,
           },
-          { title: 'Issued', dataIndex: 'issued_on' },
-          { title: 'Due', dataIndex: 'due_on' },
+          {
+            title: 'Issued',
+            dataIndex: 'issued_on',
+            render: (value: string) => formatDate(value),
+          },
+          {
+            title: 'Due',
+            dataIndex: 'due_on',
+            render: (value: string) => formatDate(value),
+          },
           {
             title: 'Outstanding',
-            render: (_value, invoice) => money(invoice.outstanding_amount, invoice.currency_code),
+            align: 'right',
+            render: (_value, invoice) => (
+              <span className="money">{money(invoice.outstanding_amount, invoice.currency_code)}</span>
+            ),
           },
           {
             title: '',
+            align: 'right',
             render: (_value, invoice) => (
-              <Button
-                className="no-print"
-                onClick={() => {
-                  setPrintId(invoice.id)
-                  setPrintToken((token) => token + 1)
-                }}
-              >
-                Print invoice {invoice.reference}
-              </Button>
+              <ActionMenu
+                label={`Actions for ${invoice.reference}`}
+                items={[
+                  {
+                    key: 'print',
+                    label: `Print invoice ${invoice.reference}`,
+                    onClick: () => {
+                      setPrintId(invoice.id)
+                      setPrintToken((token) => token + 1)
+                    },
+                  },
+                ]}
+              />
             ),
           },
         ]}
@@ -504,7 +524,6 @@ function IssueInvoiceForm({
         }
       }}
     >
-      <p className="form-panel-title">Issue an invoice</p>
       <Form.Item
         label="Resident"
         name="resident_id"
@@ -575,38 +594,46 @@ function IssueInvoiceForm({
                   >
                     <Input />
                   </Form.Item>
-                  <Form.Item
-                    label={`Quantity ${index + 1}`}
-                    name={[field.name, 'quantity']}
-                    rules={[{ required: true, message: 'Enter a quantity.' }]}
-                  >
-                    <Input inputMode="decimal" />
-                  </Form.Item>
-                  <Form.Item
-                    label={`Unit amount ${index + 1}`}
-                    name={[field.name, 'unit_amount']}
-                    rules={[{ required: true, message: 'Enter an amount.' }]}
-                  >
-                    <Input inputMode="decimal" />
-                  </Form.Item>
+                  <div className="line-amounts">
+                    <Form.Item
+                      label={`Quantity ${index + 1}`}
+                      name={[field.name, 'quantity']}
+                      rules={[{ required: true, message: 'Enter a quantity.' }]}
+                    >
+                      <Input inputMode="decimal" />
+                    </Form.Item>
+                    <Form.Item
+                      label={`Unit amount ${index + 1}`}
+                      name={[field.name, 'unit_amount']}
+                      rules={[{ required: true, message: 'Enter an amount.' }]}
+                    >
+                      <Input inputMode="decimal" />
+                    </Form.Item>
+                  </div>
                   {fields.length > 1 ? (
                     <Button onClick={() => remove(field.name)}>Remove line {index + 1}</Button>
                   ) : null}
                 </div>
               ))}
-              <Button
-                onClick={() => add({ description: '', quantity: '1', unit_amount: '' })}
-                style={{ marginBottom: 12 }}
-              >
-                Add line
-              </Button>
+              <div className="form-actions">
+                <Button onClick={() => add({ description: '', quantity: '1', unit_amount: '' })}>
+                  Add line
+                </Button>
+                <Button type="primary" htmlType="submit">
+                  Issue invoice
+                </Button>
+              </div>
             </>
           )}
         </Form.List>
       )}
-      <Button type="primary" htmlType="submit">
-        Issue invoice
-      </Button>
+      {fromTenancy ? (
+        <div className="form-actions">
+          <Button type="primary" htmlType="submit">
+            Issue invoice
+          </Button>
+        </div>
+      ) : null}
     </Form>
   )
 }
@@ -788,6 +815,7 @@ function PaymentCards({
           {
             title: 'Paid',
             dataIndex: 'paid_on',
+            render: (value: string) => formatDate(value),
           },
           {
             title: 'Amount',
@@ -904,9 +932,11 @@ function RecordPaymentForm({
       <Form.Item label="External reference" name="external_reference">
         <Input />
       </Form.Item>
-      <Button type="primary" htmlType="submit">
-        Record payment
-      </Button>
+      <div className="form-actions">
+        <Button type="primary" htmlType="submit">
+          Record payment
+        </Button>
+      </div>
     </Form>
   )
 }
@@ -1075,18 +1105,22 @@ function ResidentBilling({ workspaceId }: { workspaceId: string }) {
           style={{ marginBottom: 12 }}
         >
           <Typography.Paragraph>
-            {invoice.reference} · {invoice.status}. Due {invoice.due_on}. Outstanding{' '}
+            {invoice.reference} · {invoice.status}. Due {formatDate(invoice.due_on)}. Outstanding{' '}
             {money(invoice.outstanding_amount, invoice.currency_code)}.
           </Typography.Paragraph>
-          <Button
-            className="no-print"
-            onClick={() => {
-              setPrintId(`invoice:${invoice.id}`)
-              setPrintToken((token) => token + 1)
-            }}
-          >
-            Print invoice {invoice.reference}
-          </Button>
+          <ActionMenu
+            label={`Actions for ${invoice.reference}`}
+            items={[
+              {
+                key: 'print',
+                label: `Print invoice ${invoice.reference}`,
+                onClick: () => {
+                  setPrintId(`invoice:${invoice.id}`)
+                  setPrintToken((token) => token + 1)
+                },
+              },
+            ]}
+          />
           {invoice.status === 'issued' && Number(invoice.outstanding_amount) > 0 ? (
             <Button
               className="no-print"
@@ -1151,6 +1185,8 @@ export function BillingScreen({
   const [actionError, setActionError] = useState<string | null>(null)
   const [printId, setPrintId] = useState<string | null>(null)
   const [printToken, setPrintToken] = useState(0)
+  const [invoiceOpen, setInvoiceOpen] = useState(false)
+  const [paymentOpen, setPaymentOpen] = useState(false)
   const write = canWrite(role)
   const lists = useBillingLists(
     workspaceId,
@@ -1188,8 +1224,24 @@ export function BillingScreen({
       <PageHeader
         title="Invoices and payments"
         description="Outstanding amounts come from invoice lines and allocations. Recording a payment does not charge a card or a mobile-money account. A Paystack charge is confirmed only by the webhook."
+        actions={
+          write ? (
+            <>
+              {section === 'invoices' ? (
+                <Button type="primary" onClick={() => setInvoiceOpen(true)}>
+                  New invoice
+                </Button>
+              ) : null}
+              {section === 'payments' ? (
+                <Button type="primary" onClick={() => setPaymentOpen(true)}>
+                  New payment
+                </Button>
+              ) : null}
+              <RecurringRent workspaceId={workspaceId} />
+            </>
+          ) : null
+        }
       />
-      {write ? <RecurringRent workspaceId={workspaceId} /> : null}
       {role === 'property_manager' ? (
         <Alert
           type="info"
@@ -1246,19 +1298,28 @@ export function BillingScreen({
             onError={setActionError}
           />
           {write ? (
-            <IssueInvoiceForm
-              workspaceId={workspaceId}
-              residents={lists.residents ?? []}
-              tenancies={lists.tenancies ?? []}
-              onChanged={() => {
-                setActionError(null)
-                lists.reload()
-              }}
-              onError={setActionError}
-              onOpenPeople={() => {
-                void lists.refreshDirectories()
-              }}
-            />
+            <Modal
+              title="New invoice"
+              open={invoiceOpen}
+              onCancel={() => setInvoiceOpen(false)}
+              footer={null}
+              destroyOnHidden
+            >
+              <IssueInvoiceForm
+                workspaceId={workspaceId}
+                residents={lists.residents ?? []}
+                tenancies={lists.tenancies ?? []}
+                onChanged={() => {
+                  setInvoiceOpen(false)
+                  setActionError(null)
+                  lists.reload()
+                }}
+                onError={setActionError}
+                onOpenPeople={() => {
+                  void lists.refreshDirectories()
+                }}
+              />
+            </Modal>
           ) : null}
         </>
       ) : null}
@@ -1281,10 +1342,18 @@ export function BillingScreen({
             onError={setActionError}
           />
           {write ? (
+            <Modal
+              title="Record a payment"
+              open={paymentOpen}
+              onCancel={() => setPaymentOpen(false)}
+              footer={null}
+              destroyOnHidden
+            >
             <RecordPaymentForm
               workspaceId={workspaceId}
               residents={lists.residents ?? []}
               onChanged={() => {
+                setPaymentOpen(false)
                 setActionError(null)
                 lists.reload()
               }}
@@ -1293,6 +1362,7 @@ export function BillingScreen({
                 void lists.refreshDirectories()
               }}
             />
+            </Modal>
           ) : null}
         </>
       ) : null}

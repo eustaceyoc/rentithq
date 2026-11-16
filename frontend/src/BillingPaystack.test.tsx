@@ -109,7 +109,8 @@ it('does not offer payment for an invoice with no outstanding balance', async ()
     page(String(input).includes('/invoices/') ? [{ ...invoice, outstanding_amount: '0.0000' }] : []),
   )))
   render(<BillingScreen workspaceId="ws-ada" role="resident" />)
-  expect(await screen.findByRole('button', { name: 'Print invoice INV-0001' })).toBeInTheDocument()
+  fireEvent.click(await screen.findByRole('button', { name: 'Actions for INV-0001' }))
+  expect(await screen.findByRole('menuitem', { name: 'Print invoice INV-0001' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Pay INV-0001 with Paystack' })).not.toBeInTheDocument()
 })
 
@@ -123,6 +124,7 @@ it('refreshes the balance after returning from checkout', async () => {
   expect(await screen.findByRole('button', { name: 'Pay INV-0001 with Paystack' })).toBeInTheDocument()
   outstanding = '0.0000'
   fireEvent.click(screen.getByRole('button', { name: 'Refresh invoices and payments' }))
-  expect(await screen.findByRole('button', { name: 'Print invoice INV-0001' })).toBeInTheDocument()
+  fireEvent.click(await screen.findByRole('button', { name: 'Actions for INV-0001' }))
+  expect(await screen.findByRole('menuitem', { name: 'Print invoice INV-0001' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Pay INV-0001 with Paystack' })).not.toBeInTheDocument()
 })

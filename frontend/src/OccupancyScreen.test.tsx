@@ -126,7 +126,7 @@ describe('Occupancy screen', () => {
     render(<OccupancyScreen workspaceId="ws-ada" role="resident" />)
     expect(await screen.findByRole('heading', { name: 'Your stay' })).toBeInTheDocument()
     expect(screen.getByText(/Ama Mensah/)).toBeInTheDocument()
-    expect(screen.getByText(/800.00 GHS per month/)).toBeInTheDocument()
+    expect(screen.getByText(/GHS 800.00 per month/)).toBeInTheDocument()
     expect(screen.getByText(/Room 12 · Bed A · active/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Residents' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Add resident' })).not.toBeInTheDocument()

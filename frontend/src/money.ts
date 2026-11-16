@@ -57,5 +57,35 @@ function roundStored(amount: string, places: number): string {
 
 export function formatMoney(amount: string, currency: string): string {
   const code = currency.trim().toUpperCase()
-  return `${roundStored(amount, minorUnits(code))} ${code}`
+  const places = minorUnits(code)
+  const rounded = roundStored(amount, places)
+  const negative = rounded.startsWith('-')
+  const absolute = Number(negative ? rounded.slice(1) : rounded)
+  if (!Number.isFinite(absolute)) {
+    return `${code} ${rounded}`
+  }
+  const formatted = new Intl.NumberFormat('en-GH', {
+    minimumFractionDigits: places,
+    maximumFractionDigits: places,
+    useGrouping: true,
+  }).format(absolute)
+  return `${negative ? '-' : ''}${code} ${formatted}`
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+export function formatDate(value: string | null | undefined): string {
+  if (!value) {
+    return ''
+  }
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+  if (match === null) {
+    return value
+  }
+  const day = Number(match[3])
+  const month = MONTHS[Number(match[2]) - 1]
+  if (!month || !Number.isFinite(day)) {
+    return value
+  }
+  return `${day} ${month} ${match[1]}`
 }
