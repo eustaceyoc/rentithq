@@ -54,7 +54,7 @@
   --primary: var(--ink);
   --primary-hover: var(--ink-soft);
   --accent: var(--clay);
-  --font: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font: system-ui, 'Segoe UI', sans-serif;
   --display: Newsreader, Georgia, serif;
   --space-1: 4px;
   --space-2: 8px;

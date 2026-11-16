@@ -206,6 +206,7 @@ function WorkspacePanel({
   const [reloadKey, setReloadKey] = useState(0)
   const [inviting, setInviting] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [passwordOpen, setPasswordOpen] = useState(false)
   const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null)
   const available = workspace.status === 'active'
   const isOwner = membership.role === 'owner'
@@ -283,16 +284,27 @@ function WorkspacePanel({
             {workspace.plan_code ? ` Account plan ${workspace.plan_code}.` : ''}
           </>
         }
+        actions={
+          <Button type="primary" onClick={() => setPasswordOpen(true)}>
+            Change password
+          </Button>
+        }
       />
+      <Modal
+        title="Change password"
+        open={passwordOpen}
+        onCancel={() => setPasswordOpen(false)}
+        footer={null}
+        destroyOnHidden
+      >
+        <ChangePasswordForm />
+      </Modal>
       {planUsage ? (
         <Typography.Paragraph>
           {planLine('Properties', planUsage.property_count, planUsage.property_limit)}{' '}
           {planLine('Staff seats', planUsage.staff_seat_count, planUsage.staff_seat_limit)}
         </Typography.Paragraph>
       ) : null}
-      <div className="form-panel" style={{ marginTop: 0, marginBottom: 24 }}>
-        <ChangePasswordForm />
-      </div>
       <Card id="team" title="People">
           {membership.role === 'resident' ? (
             <Typography.Paragraph>

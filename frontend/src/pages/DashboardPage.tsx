@@ -12,6 +12,9 @@ import {
   type OccupancyReport,
 } from '../api/reports'
 import { errorText } from '../api/session'
+import { Link } from 'react-router-dom'
+import { listBookings, type BookingRecord } from '../api/occupancy'
+import { listPayments, type PaymentRecord } from '../api/billing'
 import { formatDate, formatMoney } from '../money'
 
 function today(): string {
@@ -48,6 +51,8 @@ export function DashboardPage({
   const [maintenance, setMaintenance] = useState<MaintenanceReport | null>(null)
   const [arrears, setArrears] = useState<ArrearsReport | null>(null)
   const [collections, setCollections] = useState<CollectionsReport | null>(null)
+  const [payments, setPayments] = useState<PaymentRecord[]>([])
+  const [bookings, setBookings] = useState<BookingRecord[]>([])
   const [message, setMessage] = useState<string | null>(null)
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>(staff ? 'loading' : 'ready')
 
@@ -82,6 +87,51 @@ export function DashboardPage({
         setPhase('error')
         setMessage(errorText(error))
       })
+    return () => {
+      controller.abort()
+    }
+  }, [money, staff, workspaceId])
+
+  useEffect(() => {
+    if (!staff) {
+      return
+    }
+    const controller = new AbortController()
+    const bookingLoad = listBookings(workspaceId, controller.signal)
+      .then((rows) => {
+        if (!controller.signal.aborted) {
+          setBookings(
+            rows
+              .slice()
+              .sort((left, right) => right.start_date.localeCompare(left.start_date))
+              .slice(0, 5),
+          )
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setBookings([])
+        }
+      })
+    const paymentLoad = money
+      ? listPayments(workspaceId, controller.signal)
+          .then((rows) => {
+            if (!controller.signal.aborted) {
+              setPayments(
+                rows
+                  .slice()
+                  .sort((left, right) => right.paid_on.localeCompare(left.paid_on))
+                  .slice(0, 5),
+              )
+            }
+          })
+          .catch(() => {
+            if (!controller.signal.aborted) {
+              setPayments([])
+            }
+          })
+      : Promise.resolve()
+    void Promise.all([bookingLoad, paymentLoad])
     return () => {
       controller.abort()
     }
@@ -198,6 +248,62 @@ export function DashboardPage({
                 </Typography.Paragraph>
               ) : null}
             </section>
+          </div>
+          <div className="desk-grid" style={{ marginTop: 16 }}>
+            <section className="desk-panel">
+              <h2>Recent bookings</h2>
+              <Table
+                className="data-table"
+                size="middle"
+                pagination={false}
+                rowKey="id"
+                dataSource={bookings}
+                locale={{ emptyText: <Empty description="No bookings yet." /> }}
+                columns={[
+                  { title: 'Resident', dataIndex: 'resident_name' },
+                  { title: 'Status', dataIndex: 'status', render: (value: string) => value },
+                  {
+                    title: 'Starts',
+                    dataIndex: 'start_date',
+                    render: (value: string) => formatDate(value),
+                  },
+                ]}
+              />
+              <p style={{ margin: '8px 0 0' }}>
+                <Link to="/app/bookings?section=bookings">All bookings</Link>
+              </p>
+            </section>
+            {money ? (
+              <section className="desk-panel">
+                <h2>Recent payments</h2>
+                <Table
+                  className="data-table"
+                  size="middle"
+                  pagination={false}
+                  rowKey="id"
+                  dataSource={payments}
+                  locale={{ emptyText: <Empty description="No payments yet." /> }}
+                  columns={[
+                    { title: 'Receipt', dataIndex: 'reference' },
+                    {
+                      title: 'Amount',
+                      align: 'right',
+                      render: (_value, payment) => (
+                        <span className="money">{formatMoney(payment.amount, payment.currency_code)}</span>
+                      ),
+                    },
+                    {
+                      title: 'Paid',
+                      dataIndex: 'paid_on',
+                      render: (value: string) => formatDate(value),
+                    },
+                  ]}
+                />
+                <p style={{ margin: '8px 0 0' }}>
+                  <Link to="/app/billing?section=payments">All payments</Link>
+                </p>
+              </section>
+            ) : null}
           </div>
           {money && collections && collections.by_method.length > 0 ? (
             <section className="desk-panel" style={{ marginTop: 16 }}>

@@ -11,6 +11,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
+  font-feature-settings: "zero" 0, "ss01" 0;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .boot {
@@ -272,9 +274,12 @@ h3.ant-typography {
 
 .ant-table,
 .money,
-.ledger-strip strong {
+.ledger-strip strong,
+input,
+button {
   font-family: var(--font);
-  font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" 0;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .money,

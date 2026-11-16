@@ -144,6 +144,7 @@ function PropertyDetail({
   const [reloadKey, setReloadKey] = useState(0)
   const [openSpaceId, setOpenSpaceId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [adding, setAdding] = useState(false)
   const [spaceForm] = Form.useForm<SpaceValues>()
   const selectedBuilding = Form.useWatch('building_id', spaceForm)
 
@@ -456,6 +457,10 @@ function PropertyDetail({
           )}
           {canManage ? (
             <>
+              <Button type="primary" onClick={() => setAdding(true)}>
+                Add a room
+              </Button>
+              <Modal title="Add to this property" open={adding} onCancel={() => setAdding(false)} footer={null} destroyOnHidden>
               <Form<NameValues>
                 layout="vertical"
                 requiredMark={false}
@@ -551,6 +556,7 @@ function PropertyDetail({
                   Add room or unit
                 </Button>
               </Form>
+              </Modal>
             </>
           ) : null}
         </>
@@ -592,6 +598,7 @@ function RoomDetail({
   const [reloadKey, setReloadKey] = useState(0)
   const [bedFormKey, setBedFormKey] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [addingBed, setAddingBed] = useState(false)
 
   useEffect(() => {
     if (space.kind !== 'room') {
@@ -624,6 +631,7 @@ function RoomDetail({
       setBeds(null)
       setMessage(null)
       setBedFormKey((value) => value + 1)
+      setAddingBed(false)
       setReloadKey((value) => value + 1)
     } catch (error: unknown) {
       setActionMessage(errorText(error))
@@ -753,6 +761,11 @@ function RoomDetail({
             </ul>
           ) : null}
           {canManage ? (
+            <>
+            <Button type="primary" onClick={() => setAddingBed(true)}>
+              Add bed
+            </Button>
+            <Modal title="Add a bed" open={addingBed} onCancel={() => setAddingBed(false)} footer={null} destroyOnHidden>
             <Form<NameValues>
               key={bedFormKey}
               layout="vertical"
@@ -768,10 +781,14 @@ function RoomDetail({
               >
                 <Input />
               </Form.Item>
-              <Button type="primary" htmlType="submit" loading={saving}>
-                Add bed
-              </Button>
+              <div className="form-actions">
+                <Button type="primary" htmlType="submit" loading={saving}>
+                  Add bed
+                </Button>
+              </div>
             </Form>
+            </Modal>
+            </>
           ) : null}
         </>
       )}

@@ -14,6 +14,9 @@ import {
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { notifyCatalogChanged, useCatalogRevision } from './catalog'
+import { ActionMenu } from './ui/ActionMenu'
+import { filterRows } from './ui/filterRows'
+import { ListBar } from './ui/ListBar'
 import { PageHeader } from './ui/PageHeader'
 import { SectionSwitch } from './ui/SectionSwitch'
 import { StatusTag } from './ui/StatusTag'
@@ -422,6 +425,7 @@ function ResidentsPanel({
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [adding, setAdding] = useState(false)
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -464,6 +468,14 @@ function ResidentsPanel({
     }
   }
 
+  const shown = filterRows(
+    rows ?? [],
+    query,
+    (resident) => `${resident.first_name} ${resident.last_name} ${resident.email} ${resident.phone}`,
+    'all',
+    () => '',
+  )
+
   return (
     <>
       {message ? (
@@ -491,11 +503,13 @@ function ResidentsPanel({
         <Empty description="No residents yet. Add the person before recording a stay." />
       ) : null}
       {rows && rows.length > 0 ? (
+        <>
+        <ListBar query={query} onQuery={setQuery} placeholder="Search residents" />
         <Table
           className="data-table"
           rowKey="id"
-          pagination={false}
-          dataSource={rows}
+          pagination={{ pageSize: 4, hideOnSinglePage: true, showSizeChanger: false }}
+          dataSource={shown}
           scroll={{ x: 'max-content' }}
           expandable={
             manage
@@ -521,6 +535,7 @@ function ResidentsPanel({
             { title: 'Email', dataIndex: 'email', render: (value: string) => value || '—' },
           ]}
         />
+        </>
       ) : null}
       {manage ? (
         <>
@@ -577,9 +592,11 @@ function ResidentsPanel({
           >
             <Input type="email" autoComplete="off" inputMode="email" />
           </Form.Item>
-          <Button type="primary" htmlType="submit" loading={saving}>
-            Add resident
-          </Button>
+          <div className="form-actions">
+            <Button type="primary" htmlType="submit" loading={saving}>
+              Add resident
+            </Button>
+          </div>
         </Form>
         </Modal>
         </>
@@ -675,9 +692,11 @@ function ResidentEditor({
       <Form.Item label="Sign-in email" name="account_email">
         <Input type="email" autoComplete="off" inputMode="email" />
       </Form.Item>
-      <Button type="primary" htmlType="submit" loading={saving}>
-        Save {resident.first_name} {resident.last_name}
-      </Button>
+      <div className="form-actions">
+        <Button type="primary" htmlType="submit" loading={saving}>
+          Save {resident.first_name} {resident.last_name}
+        </Button>
+      </div>
     </Form>
   )
 }
@@ -699,6 +718,8 @@ function BookingsPanel({
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [query, setQuery] = useState('')
+  const [status, setStatus] = useState('all')
   const places = usePlaces(workspaceId, true)
 
   useEffect(() => {
@@ -774,6 +795,13 @@ function BookingsPanel({
 
   const spaces = places.spaces ?? []
   const beds = places.beds ?? []
+  const shown = filterRows(
+    rows ?? [],
+    query,
+    (booking) => `${booking.resident_name} ${booking.status}`,
+    status,
+    (booking) => booking.status,
+  )
 
   return (
     <>
@@ -802,11 +830,24 @@ function BookingsPanel({
         <Typography.Paragraph>No reservations yet.</Typography.Paragraph>
       ) : null}
       {rows && rows.length > 0 ? (
+        <>
+        <ListBar
+          query={query}
+          onQuery={setQuery}
+          status={status}
+          onStatus={setStatus}
+          statuses={[
+            { value: 'confirmed', label: 'Confirmed' },
+            { value: 'cancelled', label: 'Cancelled' },
+            { value: 'converted', label: 'Converted' },
+          ]}
+          placeholder="Search bookings"
+        />
         <Table
           className="data-table"
           rowKey="id"
-          pagination={false}
-          dataSource={rows}
+          pagination={{ pageSize: 8, hideOnSinglePage: true, showSizeChanger: false }}
+          dataSource={shown}
           scroll={{ x: 'max-content' }}
           style={{ marginBottom: 16 }}
           expandable={{
@@ -884,8 +925,29 @@ function BookingsPanel({
                   .filter(Boolean)
                   .join(' · '),
             },
+            {
+              title: '',
+              align: 'right',
+              render: (_value, booking) =>
+                manage && booking.status === 'confirmed' ? (
+                  <ActionMenu
+                    label={`Actions for ${booking.resident_name}`}
+                    items={[
+                      {
+                        key: 'cancel',
+                        label: 'Cancel reservation',
+                        danger: true,
+                        onClick: () => {
+                          void handleCancel(booking.id)
+                        },
+                      },
+                    ]}
+                  />
+                ) : null,
+            },
           ]}
         />
+        </>
       ) : null}
       {manage ? (
         <>
@@ -1004,6 +1066,9 @@ function TenanciesPanel({
   const [message, setMessage] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [query, setQuery] = useState('')
+  const [status, setStatus] = useState('all')
   const places = usePlaces(workspaceId, true)
 
   useEffect(() => {
@@ -1028,6 +1093,14 @@ function TenanciesPanel({
       controller.abort()
     }
   }, [workspaceId, reloadKey])
+
+  const shown = filterRows(
+    rows ?? [],
+    query,
+    (tenancy) => `${tenancy.resident_name} ${tenancy.status}`,
+    status,
+    (tenancy) => tenancy.status,
+  )
 
   async function handleCreate(values: StayValues) {
     setSaving(true)
@@ -1080,11 +1153,24 @@ function TenanciesPanel({
         <Typography.Paragraph>No tenancies yet.</Typography.Paragraph>
       ) : null}
       {rows && rows.length > 0 ? (
+        <>
+        <ListBar
+          query={query}
+          onQuery={setQuery}
+          status={status}
+          onStatus={setStatus}
+          statuses={[
+            { value: 'active', label: 'Active' },
+            { value: 'ended', label: 'Ended' },
+            { value: 'cancelled', label: 'Cancelled' },
+          ]}
+          placeholder="Search tenancies"
+        />
         <Table
           className="data-table"
           rowKey="id"
-          pagination={false}
-          dataSource={rows}
+          pagination={{ pageSize: 8, hideOnSinglePage: true, showSizeChanger: false }}
+          dataSource={shown}
           scroll={{ x: 'max-content' }}
           columns={[
             {
@@ -1110,11 +1196,16 @@ function TenanciesPanel({
             },
           ]}
         />
+        </>
       ) : null}
       {manage ? (
+        <>
+        <Button type="primary" onClick={() => setCreating(true)}>
+          New agreement
+        </Button>
+        <Modal title="New agreement" open={creating} onCancel={() => setCreating(false)} footer={null} destroyOnHidden>
         <Form<StayValues>
           key={reloadKey}
-          className="form-panel"
           layout="vertical"
           requiredMark={false}
           initialValues={{ fee_period: 'month' }}
@@ -1122,7 +1213,6 @@ function TenanciesPanel({
             void handleCreate(values)
           }}
         >
-          <p className="form-panel-title">New agreement</p>
           <TargetFields
             residents={residents}
             spaces={places.spaces ?? []}
@@ -1141,10 +1231,14 @@ function TenanciesPanel({
           <Form.Item label="Deposit" name="deposit_amount">
             <Input inputMode="decimal" autoComplete="off" placeholder="0.00" />
           </Form.Item>
-          <Button type="primary" htmlType="submit" loading={saving}>
-            Add tenancy
-          </Button>
+          <div className="form-actions">
+            <Button type="primary" htmlType="submit" loading={saving}>
+              Add tenancy
+            </Button>
+          </div>
         </Form>
+        </Modal>
+        </>
       ) : null}
     </>
   )

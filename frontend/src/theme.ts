@@ -19,7 +19,7 @@ export const theme: ThemeConfig = {
     controlOutline: 'rgba(143, 67, 40, 0.35)',
     controlOutlineWidth: 3,
     borderRadius: 2,
-    fontFamily: "'Atkinson Hyperlegible', system-ui, sans-serif",
+    fontFamily: "system-ui, 'Segoe UI', sans-serif",
     fontSize: 15,
     controlHeight: 40,
   },

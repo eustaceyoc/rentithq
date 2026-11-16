@@ -73,7 +73,7 @@ export function LandingHero() {
         <div>
           <p className="lede">
             Rent It HQ is the desk your staff work from. Properties, rooms, residents, bookings,
-            invoices, and maintenance stay in the same place. It is not a public listing site.
+            invoices, and maintenance stay in the same place.
           </p>
           <div className="hero-actions">
             <Link className="btn btn-primary" to="/login?mode=register">
